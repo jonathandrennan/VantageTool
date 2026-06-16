@@ -1,0 +1,1507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ARF Illustration Tool – Allianz</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="arf_data.js"></script>
+<style>
+:root {
+  --navy: #003781;
+  --teal: #13a0d3;
+  --tl: #e6f7f9;
+  --tm: #b3e8ef;
+  --bg: #f0f2f5;
+  --gb: #d0d8e4;
+  --td: #1a2a3a;
+  --tm2: #4a5a6a;
+  --red: #e03e3e;
+  --grn: #1a9e5c;
+  --white: #ffffff;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', Arial, sans-serif; background: var(--bg); color: var(--td); min-height: 100vh; }
+body::before { content: ''; display: block; height: 4px; background: linear-gradient(90deg, var(--navy) 0%, var(--teal) 60%, #00c4d8 100%); }
+.hdr { background: var(--white); padding: 0 40px; display: flex; align-items: center; justify-content: space-between; height: 80px; border-bottom: 1px solid #e0e6ed; box-shadow: 0 2px 8px rgba(0,55,129,0.07); }
+.hdr-l { display: flex; align-items: center; gap: 20px; }
+.hdr-divider { width: 1px; height: 36px; background: var(--gb); margin: 0 4px; }
+.htitle { color: var(--navy); font-size: 21px; font-weight: 800; line-height: 1.2; letter-spacing: -0.4px; }
+.htitle span { color: var(--teal); }
+.hsub { color: var(--tm2); font-size: 11px; margin-top: 4px; font-weight: 500; letter-spacing: 0.4px; text-transform: uppercase; }
+.hbadge { background: var(--tl); border: 1px solid var(--teal); color: var(--navy); font-size: 11px; padding: 4px 12px; border-radius: 12px; font-weight: 600; }
+.wizard-bar { background: var(--white); border-bottom: 2px solid #e0e6ed; padding: 0 40px; display: flex; align-items: center; justify-content: center; height: 76px; }
+.wizard-track { display: flex; align-items: center; }
+.wz-step { display: flex; flex-direction: column; align-items: center; gap: 5px; cursor: default; min-width: 80px; }
+.wz-step.clickable { cursor: pointer; }
+.wz-circle { width: 36px; height: 36px; border-radius: 50%; border: 2px solid var(--gb); background: var(--white); color: var(--tm2); font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center; transition: all .25s; flex-shrink: 0; }
+.wz-label { font-size: 11px; font-weight: 600; color: var(--tm2); white-space: nowrap; text-transform: uppercase; letter-spacing: .4px; transition: color .25s; }
+.wz-line { width: 70px; height: 2px; background: var(--gb); margin: 0 6px; margin-bottom: 20px; transition: background .3s; flex-shrink: 0; }
+.wz-step.done .wz-circle { background: var(--teal); border-color: var(--teal); color: #fff; }
+.wz-step.done .wz-label { color: var(--teal); }
+.wz-step.active .wz-circle { background: var(--navy); border-color: var(--navy); color: #fff; box-shadow: 0 0 0 4px rgba(0,55,129,0.12); }
+.wz-step.active .wz-label { color: var(--navy); font-weight: 700; }
+.wz-line.done { background: var(--teal); }
+.main { max-width: 1240px; margin: 0 auto; padding: 32px 28px; }
+.card { background: var(--white); border-radius: 10px; padding: 28px 32px; box-shadow: 0 1px 6px rgba(0,55,129,0.08); margin-bottom: 20px; border: 1px solid #e4eaf2; }
+.step-panel { display: none; }
+.step-panel.active { display: block; max-width: 860px; margin: 0 auto; }
+.step-hdr { display: flex; align-items: center; gap: 12px; font-size: 16px; font-weight: 700; color: var(--navy); margin-bottom: 24px; padding-bottom: 14px; border-bottom: 1px solid #f0f2f5; }
+.step-num { display: flex; align-items: center; justify-content: center; background: var(--navy); color: #fff; border-radius: 50%; width: 28px; height: 28px; font-size: 13px; font-weight: 700; flex-shrink: 0; }
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px 24px; }
+.form-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px 24px; }
+.fg { display: flex; flex-direction: column; gap: 6px; }
+.fg label { font-size: 11px; font-weight: 700; color: var(--tm2); text-transform: uppercase; letter-spacing: .5px; }
+.fg input, .fg select { border: 1.5px solid var(--gb); border-radius: 6px; padding: 9px 13px; font-size: 14px; color: var(--td); background: var(--white); outline: none; transition: border .2s; width: 100%; }
+.fg input:focus, .fg select:focus { border-color: var(--teal); }
+.fg .hint { font-size: 11px; color: var(--tm2); margin-top: 2px; }
+.tgg { display: flex; border: 1.5px solid var(--gb); border-radius: 6px; overflow: hidden; align-self: flex-start; }
+.tg { background: var(--white); border: none; padding: 9px 14px; font-size: 13px; font-weight: 600; cursor: pointer; color: var(--tm2); transition: all .2s; }
+.tg.active { background: var(--navy); color: #fff; }
+.step-nav { display: flex; justify-content: space-between; align-items: center; margin-top: 4px; padding: 24px 0 8px; border-top: 1px solid #e8edf4; }
+.nav-back { background: var(--white); border: 2px solid var(--gb); border-radius: 8px; padding: 12px 26px; font-size: 14px; font-weight: 600; color: var(--tm2); cursor: pointer; font-family: inherit; transition: all .2s; }
+.nav-back:hover { border-color: var(--navy); color: var(--navy); }
+.nav-next { background: var(--teal); border: none; border-radius: 8px; padding: 13px 34px; font-size: 14px; font-weight: 700; color: #fff; cursor: pointer; font-family: inherit; transition: background .2s; }
+.nav-next:hover { background: var(--navy); }
+.step-err { background: #fde8e8; border: 1px solid var(--red); border-radius: 6px; padding: 11px 16px; font-size: 13px; color: var(--red); margin-top: 16px; display: none; }
+.sec-hdr { font-size: 13px; font-weight: 700; color: var(--navy); margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid #f0f2f5; }
+/* Fund cards */
+.fund-card-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px; }
+.fund-card { border: 2px solid var(--gb); border-radius: 10px; padding: 12px 10px 10px; cursor: pointer; position: relative; transition: border-color .15s, background .15s; user-select: none; }
+.fund-card:hover { border-color: var(--teal); }
+.fund-card.selected { border-color: var(--teal); background: var(--tl); }
+.fund-card-check { position: absolute; top: 7px; right: 7px; width: 16px; height: 16px; border-radius: 50%; background: var(--teal); color: #fff; display: none; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; }
+.fund-card.selected .fund-card-check { display: flex; }
+.fund-card-dot { width: 8px; height: 8px; border-radius: 50%; margin-bottom: 6px; }
+.fund-card-name { font-size: 11.5px; font-weight: 600; color: var(--td); line-height: 1.3; margin-bottom: 3px; }
+.fund-card-rate { font-size: 11px; color: var(--tm2); }
+/* Allocation */
+.alloc-bar-wrap { height: 8px; border-radius: 4px; background: #e8eaed; overflow: hidden; margin-bottom: 14px; }
+.alloc-bar { height: 100%; display: flex; }
+.diy-back-link { background: none; border: none; color: var(--teal); font-size: 12px; font-weight: 600; cursor: pointer; padding: 0; font-family: inherit; }
+.diy-back-link:hover { text-decoration: underline; }
+.fund-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.fund-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.fund-name { font-size: 13px; font-weight: 600; color: var(--td); flex: 1; min-width: 0; }
+.fund-rate { font-size: 11px; color: var(--tm2); width: 60px; text-align: right; flex-shrink: 0; }
+.fund-inp { width: 72px; border: 1.5px solid var(--gb); border-radius: 6px; padding: 6px 8px; font-size: 14px; text-align: right; outline: none; font-family: inherit; }
+.fund-inp:focus { border-color: var(--teal); box-shadow: 0 0 0 3px rgba(19,160,211,.12); }
+.fund-pct { font-size: 13px; color: var(--tm2); font-weight: 600; width: 14px; flex-shrink: 0; }
+.fund-total { font-size: 12px; font-weight: 700; text-align: right; margin-top: 6px; }
+.fund-gtee-btn { width: 86px; flex-shrink: 0; padding: 5px 8px; border: 1.5px solid var(--gb); border-radius: 6px; font-size: 11px; font-weight: 600; color: var(--tm2); background: var(--white); cursor: pointer; font-family: inherit; transition: all .2s; white-space: nowrap; text-align: center; }
+.fund-gtee-btn:hover { border-color: var(--teal); color: var(--teal); }
+.fund-gtee-btn.active { background: var(--tl); border-color: var(--teal); color: var(--teal); }
+.fund-gtee-spacer { width: 86px; flex-shrink: 0; }
+/* Income section */
+.income-section { margin-top: 20px; padding-top: 18px; border-top: 1px solid #f0f2f5; }
+.income-toggle { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+.inc-btn { border: 2px solid var(--gb); border-radius: 8px; padding: 9px 16px; font-size: 13px; font-weight: 600; color: var(--tm2); background: var(--white); cursor: pointer; font-family: inherit; transition: all .2s; }
+.inc-btn:hover { border-color: var(--teal); color: var(--teal); }
+.inc-btn.active { border-color: var(--navy); background: #f0f4fa; color: var(--navy); }
+/* Results */
+#results-wrap { display: none; }
+.results-nav { background: var(--white); border-bottom: 2px solid #e0e6ed; padding: 0 40px; display: flex; align-items: center; gap: 0; margin: -32px -28px 32px; }
+.results-back { background: none; border: none; border-right: 1px solid #e0e6ed; color: var(--navy); font-size: 13px; font-weight: 700; cursor: pointer; padding: 0 24px 0 0; margin-right: 8px; height: 52px; font-family: inherit; display: flex; align-items: center; gap: 8px; transition: color .2s; }
+.results-back:hover { color: var(--teal); }
+.result-tab { background: transparent; border: none; border-bottom: 3px solid transparent; margin-bottom: -2px; color: var(--tm2); padding: 14px 22px; cursor: pointer; font-size: 14px; font-weight: 500; transition: all .2s; white-space: nowrap; font-family: inherit; }
+.result-tab:hover { color: var(--navy); }
+.result-tab.active { color: var(--teal); border-bottom-color: var(--teal); font-weight: 700; }
+.result-panel { display: none; }
+.result-panel.active { display: block; }
+.sbar { background: var(--navy); border-radius: 10px; padding: 20px 28px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; border-left: 5px solid var(--teal); }
+.sname { color: #fff; font-size: 16px; font-weight: 700; }
+.ssub { color: rgba(255,255,255,.55); font-size: 12px; margin-top: 3px; }
+.sparams { display: flex; gap: 28px; flex-wrap: wrap; }
+.pm { display: flex; flex-direction: column; gap: 2px; text-align: center; }
+.pml { font-size: 10px; color: rgba(255,255,255,.5); text-transform: uppercase; letter-spacing: .6px; }
+.pmv { font-size: 20px; font-weight: 800; color: var(--teal); }
+.pmu { font-size: 11px; color: rgba(255,255,255,.5); }
+.srow { display: grid; grid-template-columns: repeat(auto-fit, minmax(155px, 1fr)); gap: 14px; margin-bottom: 20px; }
+.sc { background: var(--white); border-radius: 8px; padding: 16px 18px; box-shadow: 0 1px 4px rgba(0,55,129,0.07); border: 1px solid #e4eaf2; text-align: center; }
+.sl { font-size: 10px; color: var(--tm2); text-transform: uppercase; letter-spacing: .6px; margin-bottom: 7px; font-weight: 600; }
+.sv { font-size: 22px; font-weight: 800; }
+.ss { font-size: 10px; color: var(--tm2); margin-top: 4px; }
+.cbtn { background: var(--teal); color: #fff; border: none; border-radius: 6px; padding: 11px 26px; font-size: 14px; font-weight: 700; cursor: pointer; transition: background .2s; }
+.cbtn:hover { background: var(--navy); }
+.print-btn { background: var(--navy); color: #fff; border: none; border-radius: 6px; padding: 7px 16px; font-size: 13px; font-weight: 600; cursor: pointer; transition: background .2s; white-space: nowrap; font-family: inherit; }
+.print-btn:hover { background: var(--teal); }
+.info-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 4px; }
+.info-cell { background: var(--bg); border-radius: 6px; padding: 10px 14px; }
+.info-lbl { font-size: 10px; font-weight: 700; color: var(--tm2); text-transform: uppercase; letter-spacing: .5px; }
+.info-val { font-size: 15px; font-weight: 700; color: var(--navy); margin-top: 3px; }
+.chdr { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; flex-wrap: wrap; gap: 10px; }
+.chtitle { font-size: 15px; font-weight: 700; color: var(--navy); }
+.cwrap { position: relative; height: 300px; overflow: hidden; transition: height .3s ease, opacity .3s ease; }
+.cwrap.collapsed { height: 0 !important; opacity: 0; }
+.collapse-btn { background: none; border: 1.5px solid var(--gb); border-radius: 6px; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--tm2); font-size: 16px; transition: all .2s; flex-shrink: 0; line-height: 1; }
+.collapse-btn:hover { border-color: var(--teal); color: var(--teal); }
+.collapse-btn.collapsed { transform: rotate(-90deg); }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th { background: var(--navy); color: #fff; padding: 10px 13px; text-align: right; font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: .4px; }
+th:first-child { text-align: left; border-radius: 6px 0 0 0; }
+th:last-child { border-radius: 0 6px 0 0; }
+td { padding: 10px 13px; border-bottom: 1px solid #f0f2f5; text-align: right; }
+td:first-child { text-align: left; font-weight: 600; color: var(--navy); }
+tr:nth-child(even) td { background: #fafbfd; }
+tr:hover td { background: var(--tl); }
+tr:last-child td { border-bottom: none; }
+.disc { font-size: 11px; color: var(--tm2); margin-top: 24px; padding-top: 14px; border-top: 1px solid #e4eaf2; line-height: 1.65; }
+@media(max-width:700px) { .wz-line { width: 28px; } .wz-label { font-size: 9px; } .fund-card-grid { grid-template-columns: 1fr 1fr; } }
+@media(max-width:600px) { .hdr { padding: 0 16px; height: auto; padding-top: 12px; padding-bottom: 12px; } .main { padding: 16px 12px; } .card { padding: 16px; } }
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="hdr-l">
+    <img src="allianz-logo.svg" height="38" alt="Allianz">
+    <div class="hdr-divider"></div>
+    <div>
+      <div class="htitle">Allianz Vantage <span>ARF</span></div>
+      <div class="hsub">Point of Issue Disclosure &middot; Illustration Tool</div>
+    </div>
+  </div>
+  <div style="display:flex;align-items:center;gap:12px;">
+    <div class="hbadge">v1.0 &middot; 2026</div>
+  </div>
+</div>
+
+<div class="wizard-bar" id="wizard-bar">
+  <div class="wizard-track">
+    <div class="wz-step active" id="wz-1" onclick="goToStep(1)">
+      <div class="wz-circle" id="wz-circle-1">1</div>
+      <div class="wz-label">Customer Details</div>
+    </div>
+    <div class="wz-line" id="wz-line-1"></div>
+    <div class="wz-step" id="wz-2" onclick="goToStep(2)">
+      <div class="wz-circle" id="wz-circle-2">2</div>
+      <div class="wz-label">Policy Details</div>
+    </div>
+    <div class="wz-line" id="wz-line-2"></div>
+    <div class="wz-step" id="wz-3" onclick="goToStep(3)">
+      <div class="wz-circle" id="wz-circle-3">3</div>
+      <div class="wz-label">Investment Strategy</div>
+    </div>
+    <div class="wz-line" id="wz-line-3"></div>
+    <div class="wz-step" id="wz-4">
+      <div class="wz-circle" id="wz-circle-4">4</div>
+      <div class="wz-label">Results</div>
+    </div>
+  </div>
+</div>
+
+<div class="main">
+
+<!-- ─── STEP 1: Customer Details ─────────────────────────────────────────── -->
+<div class="step-panel active" id="step-1">
+  <div class="card">
+    <div class="step-hdr"><span class="step-num">1</span>Customer Details</div>
+    <div class="form-grid-3">
+      <div class="fg">
+        <label>Customer Name</label>
+        <input type="text" id="inp-name" placeholder="e.g. John Smith" oninput="markDirty()">
+      </div>
+      <div class="fg">
+        <label>Date of Birth</label>
+        <input type="date" id="inp-dob" onchange="onDobChange()">
+        <span class="hint" id="hint-age"></span>
+      </div>
+      <div class="fg">
+        <label>Policy Start Date</label>
+        <input type="date" id="inp-start" onchange="onStartChange()">
+      </div>
+      <div class="fg">
+        <label>Policy Number</label>
+        <input type="text" id="inp-policy-num" placeholder="e.g. ARF123456" oninput="markDirty()">
+        <span class="hint">Optional</span>
+      </div>
+    </div>
+  </div>
+  <div class="step-err" id="step-1-err"></div>
+  <div class="step-nav">
+    <div></div>
+    <button class="nav-next" onclick="nextStep()">Next: Policy Details &nbsp;&rarr;</button>
+  </div>
+</div>
+
+<!-- ─── STEP 2: Policy Details ───────────────────────────────────────────── -->
+<div class="step-panel" id="step-2">
+  <div class="card">
+    <div class="step-hdr"><span class="step-num">2</span>Policy Details</div>
+    <div class="form-grid-3" style="grid-template-columns:1.1fr 2fr 0.9fr;">
+      <div class="fg">
+        <label>Product Version</label>
+        <div class="tgg" id="tgg-version">
+          <button class="tg active" id="tg-vA" onclick="setVersion('A')">A</button>
+          <button class="tg" id="tg-vB" onclick="setVersion('B')">B</button>
+          <button class="tg" id="tg-vC" onclick="setVersion('C')">C</button>
+          <button class="tg" id="tg-vD" onclick="setVersion('D')">D</button>
+          <button class="tg" id="tg-vF" onclick="setVersion('F')">F</button>
+        </div>
+        <span class="hint" id="hint-version">Version A: standard broker distribution</span>
+      </div>
+      <div class="fg">
+        <label>Product Code</label>
+        <select id="sel-code" onchange="onCodeChange()"></select>
+      </div>
+      <div class="fg">
+        <label>Single Contribution</label>
+        <input type="text" id="inp-contrib" placeholder="e.g. 100,000" oninput="fmtInput(this)" inputmode="numeric">
+        <span class="hint">Min. &euro;20,000</span>
+      </div>
+    </div>
+
+    <!-- Income section -->
+    <div class="income-section">
+      <div class="sec-hdr">Income</div>
+      <div style="font-size:12px;color:var(--tm2);margin-bottom:12px;">
+        Revenue deemed distribution rules require minimum withdrawals from age 61 (4%), age 71 (5%), or 6% if fund &gt; &euro;2M. The illustration assumes income escalates at 2% per annum.
+      </div>
+      <div class="income-toggle">
+        <button class="inc-btn active" id="inc-default" onclick="setIncomeType('default')">Default (Revenue Deemed)</button>
+        <button class="inc-btn" id="inc-amount" onclick="setIncomeType('custom_amount')">Custom &euro; Amount</button>
+        <button class="inc-btn" id="inc-pct" onclick="setIncomeType('custom_pct')">Custom %</button>
+      </div>
+      <div style="margin-top:14px;max-width:420px;">
+        <div class="form-grid" style="grid-template-columns:1fr 1fr;">
+          <div class="fg">
+            <label>Income Start Age</label>
+            <input type="number" id="inp-income-start-age" min="50" max="84" step="1" placeholder="e.g. 61" oninput="onIncomeStartAgeChange()">
+            <span class="hint" id="hint-income-start"></span>
+          </div>
+          <div class="fg" id="income-val-wrap" style="display:none;">
+            <label id="income-inp-label">Annual Income (&euro;)</label>
+            <input type="text" id="inp-income-val" placeholder="0" oninput="fmtInput(this)" inputmode="numeric">
+          </div>
+        </div>
+        <div style="font-size:11px;color:var(--tm2);margin-top:6px;" id="income-floor-note" style="display:none;">
+          If this is below the Revenue deemed distribution minimum, the minimum will be used.
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <div class="step-err" id="step-2-err"></div>
+  <div class="step-nav">
+    <button class="nav-back" onclick="prevStep()">&larr; &nbsp;Back</button>
+    <button class="nav-next" onclick="nextStep()">Next: Investment Strategy &nbsp;&rarr;</button>
+  </div>
+</div>
+
+<!-- ─── STEP 3: Investment Strategy ─────────────────────────────────────── -->
+<div class="step-panel" id="step-3">
+  <div class="card">
+    <div class="step-hdr"><span class="step-num">3</span>Investment Strategy</div>
+
+    <!-- Two-phase DIY fund picker -->
+    <div id="diy-wrap">
+
+      <!-- Phase 1: Select funds -->
+      <div id="diy-phase-select">
+        <div class="sec-hdr">Select Funds</div>
+        <div style="font-size:12px;color:var(--tm2);margin-bottom:4px;">Choose the funds to include in this ARF — you will set allocations in the next step.</div>
+        <div class="fund-card-grid" id="fund-card-grid"></div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:14px;">
+          <div id="fund-select-count" style="font-size:12px;color:var(--tm2);">No funds selected</div>
+          <button id="btn-to-allocate" onclick="goToAllocate()" disabled
+            style="background:var(--teal);color:#fff;border:none;border-radius:6px;padding:9px 20px;font-size:13px;font-weight:700;cursor:pointer;opacity:0.4;transition:opacity .2s;">
+            Set Allocations &nbsp;&rarr;
+          </button>
+        </div>
+      </div>
+
+      <!-- Phase 2: Set allocations -->
+      <div id="diy-phase-allocate" style="display:none;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+          <button class="diy-back-link" onclick="goToSelect()">&larr; Change funds</button>
+          <button onclick="equaliseAllocs()"
+            style="background:none;border:1.5px solid var(--gb);border-radius:6px;padding:6px 14px;font-size:12px;font-weight:600;color:var(--tm2);cursor:pointer;font-family:inherit;">
+            Equal Split
+          </button>
+        </div>
+        <div class="alloc-bar-wrap"><div class="alloc-bar" id="alloc-bar"></div></div>
+        <div id="fund-rows"></div>
+        <div class="fund-total">Total: <span id="fund-total-val" style="color:var(--red)">0%</span></div>
+      </div>
+
+    </div><!-- /diy-wrap -->
+
+  </div><!-- /card -->
+  <div class="step-err" id="step-3-err"></div>
+  <div class="step-nav">
+    <button class="nav-back" onclick="prevStep()">&larr; &nbsp;Back</button>
+    <button class="nav-next" onclick="nextStep()">Generate Illustration &nbsp;&rarr;</button>
+  </div>
+</div>
+
+<!-- ─── STEP 4: Results ───────────────────────────────────────────────────── -->
+<div id="results-wrap">
+
+  <div class="results-nav">
+    <button class="results-back" onclick="backToWizard()">&#8592; &nbsp;Edit Inputs</button>
+    <button class="result-tab active" id="rtab-ill" onclick="showResultTab('ill')">Illustration</button>
+    <button class="result-tab" id="rtab-comm" onclick="showResultTab('comm')">Commission</button>
+    <div style="margin-left:auto;display:flex;align-items:center;gap:10px;">
+      <button class="print-btn" onclick="generateDocument()">Generate POI Document</button>
+    </div>
+  </div>
+
+  <!-- Illustration tab -->
+  <div class="result-panel active" id="rpanel-ill">
+
+    <div class="sbar">
+      <div>
+        <div class="sname" id="ill-name"></div>
+        <div class="ssub" id="ill-sub"></div>
+      </div>
+      <div class="sparams" id="ill-params"></div>
+    </div>
+
+    <div class="srow" id="ill-cards"></div>
+
+    <div class="card">
+      <div class="chdr">
+        <div class="chtitle">Projected Fund Value</div>
+        <button class="collapse-btn" onclick="toggleChart('fund-chart-wrap', this)" aria-label="Collapse">&#8964;</button>
+      </div>
+      <div id="fund-chart-wrap" class="cwrap"><canvas id="arf-chart"></canvas></div>
+    </div>
+
+    <div class="card">
+      <div class="chdr">
+        <div class="chtitle">Annual Income <span id="inc-chart-subtitle" style="font-size:12px;font-weight:400;color:var(--tm2);"></span></div>
+        <button class="collapse-btn" onclick="toggleChart('income-chart-wrap', this)" aria-label="Collapse">&#8964;</button>
+      </div>
+      <div id="income-chart-wrap" class="cwrap"><canvas id="income-chart"></canvas></div>
+      <div class="disc" style="margin-top:12px;">Annual income shown for each milestone year. Gross of income tax, USC and PRSI. Deemed distribution taxation applies from age 61 regardless of when physical withdrawals begin.</div>
+    </div>
+
+    <div class="card">
+      <div class="chdr">
+        <div class="chtitle">Projected Benefits &amp; Charges <span style="font-size:12px;font-weight:400;color:var(--tm2);">(at <span id="tbl-rate1-label"></span>% growth)</span></div>
+      </div>
+      <div style="overflow-x:auto;">
+        <table id="ill-tbl">
+          <thead>
+            <tr>
+              <th style="text-align:left;">Year</th>
+              <th>A — Contributions</th>
+              <th>B — Inv. Growth</th>
+              <th>C — Charges</th>
+              <th>D — Cumul. Income</th>
+              <th>E — Fund Value</th>
+            </tr>
+          </thead>
+          <tbody id="ill-tbl-body"></tbody>
+        </table>
+      </div>
+      <div class="disc" id="ill-disc"></div>
+    </div>
+
+  </div><!-- /rpanel-ill -->
+
+  <!-- Commission tab -->
+  <div class="result-panel" id="rpanel-comm">
+    <div class="card">
+      <div class="sec-hdr">Commission Structure</div>
+      <div class="info-grid" id="comm-info-grid"></div>
+    </div>
+    <div class="card">
+      <div class="chtitle" style="margin-bottom:16px;">Projected Intermediary Remuneration</div>
+      <div style="overflow-x:auto;">
+        <table>
+          <thead>
+            <tr>
+              <th style="text-align:left;">Year</th>
+              <th>Contributions (&euro;)</th>
+              <th>Remuneration at <span id="comm-rate1-hdr"></span>% (&euro;)</th>
+              <th>Remuneration at <span id="comm-rate2-hdr"></span>% (&euro;)</th>
+            </tr>
+          </thead>
+          <tbody id="comm-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="disc" id="comm-disc"></div>
+  </div>
+
+</div><!-- /results-wrap -->
+
+</div><!-- /main -->
+
+<script>
+// ─── State ───────────────────────────────────────────────────────────────────
+var state = {
+  name: '', dob: '', startDate: '', policyNum: '',
+  version: 'A', code: 'A5',
+  contribution: 0,
+  diySelected: {}, diyAllocs: {}, diyGmab: {},
+  incomeType: 'default', incomeValue: 0, incomeStartAge: null
+};
+
+var currentStep = 1;
+var dirty = true;
+var illResult = null;
+var arfChart = null;
+var incomeChart = null;
+var MILESTONES = {1:1,2:1,3:1,4:1,5:1,10:1,15:1,20:1,25:1,30:1,35:1,40:1};
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+function euro(n) { return '€' + Math.round(n).toLocaleString('en-IE'); }
+function pct(n)  { return (n * 100).toFixed(2) + '%'; }
+function todayStr() {
+  var d = new Date(); return d.toISOString().slice(0,10);
+}
+function markDirty() { dirty = true; }
+
+function fmtInput(el) {
+  var raw = el.value.replace(/[^0-9]/g, '');
+  var num = parseInt(raw, 10);
+  el.value = isNaN(num) ? '' : num.toLocaleString('en-IE');
+  markDirty();
+}
+function parseAmount(id) {
+  var raw = (document.getElementById(id).value || '').replace(/[^0-9.]/g, '');
+  return parseFloat(raw) || 0;
+}
+
+// ─── Step navigation ─────────────────────────────────────────────────────────
+function goToStep(n) {
+  if (n < 1 || n > 4) return;
+  if (n > currentStep) { if (!validateStep(currentStep)) return; }
+  currentStep = n;
+  renderWizard();
+}
+function nextStep() {
+  if (!validateStep(currentStep)) return;
+  if (currentStep < 3) { currentStep++; renderWizard(); return; }
+  if (currentStep === 3) { computeAndShowResults(); }
+}
+function prevStep() {
+  if (currentStep > 1) { currentStep--; renderWizard(); }
+}
+function backToWizard() {
+  document.getElementById('results-wrap').style.display = 'none';
+  document.getElementById('wizard-bar').style.display = 'flex';
+  document.querySelectorAll('.step-panel').forEach(function(p){ p.classList.remove('active'); });
+  document.getElementById('step-' + currentStep).classList.add('active');
+}
+
+function renderWizard() {
+  document.getElementById('results-wrap').style.display = 'none';
+  document.getElementById('wizard-bar').style.display = 'flex';
+  for (var i = 1; i <= 4; i++) {
+    var sp = document.getElementById('step-' + i);
+    if (sp) sp.classList.toggle('active', i === currentStep);
+    var wz = document.getElementById('wz-' + i);
+    wz.className = 'wz-step' + (i < currentStep ? ' done clickable' : i === currentStep ? ' active' : '');
+    document.getElementById('wz-circle-' + i).textContent = i < currentStep ? '✓' : String(i);
+    if (i < 4) document.getElementById('wz-line-' + i).className = 'wz-line' + (i < currentStep ? ' done' : '');
+  }
+  if (currentStep === 3) restoreDiyPhase();
+}
+
+function showErr(id, msg) {
+  var el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = msg; el.style.display = msg ? 'block' : 'none';
+}
+
+// ─── Validation ──────────────────────────────────────────────────────────────
+function validateStep(n) {
+  showErr('step-' + n + '-err', '');
+  if (n === 1) {
+    if (!document.getElementById('inp-name').value.trim()) {
+      return showErr('step-1-err', 'Please enter the customer name.'), false;
+    }
+    if (!document.getElementById('inp-dob').value) {
+      return showErr('step-1-err', 'Please enter the date of birth.'), false;
+    }
+    if (!document.getElementById('inp-start').value) {
+      return showErr('step-1-err', 'Please enter the policy start date.'), false;
+    }
+    var age = calcAge();
+    if (age < 50 || age > 84) {
+      return showErr('step-1-err', 'Policyholder age must be between 50 and 84.'), false;
+    }
+    state.name = document.getElementById('inp-name').value.trim();
+    state.dob = document.getElementById('inp-dob').value;
+    state.startDate = document.getElementById('inp-start').value;
+    state.policyNum = document.getElementById('inp-policy-num').value.trim();
+    return true;
+  }
+  if (n === 2) {
+    var contrib = parseAmount('inp-contrib');
+    if (contrib < 20000) {
+      return showErr('step-2-err', 'Minimum single contribution is €20,000.'), false;
+    }
+    state.contribution = contrib;
+    return true;
+  }
+  if (n === 3) {
+    var allocated = Object.keys(state.diyAllocs).some(function(id){ return (state.diyAllocs[id]||0) > 0; });
+    if (!allocated) {
+      return showErr('step-3-err', 'Please select at least one fund and set allocations.'), false;
+    }
+    var total = 0;
+    Object.keys(state.diyAllocs).forEach(function(id){ total += state.diyAllocs[id] || 0; });
+    if (Math.abs(total - 100) > 0.05) {
+      return showErr('step-3-err', 'Fund allocations must total 100%.'), false;
+    }
+    var startAgeVal = parseInt(document.getElementById('inp-income-start-age').value);
+    if (!isNaN(startAgeVal)) {
+      if (startAgeVal < 50 || startAgeVal > 84) {
+        return showErr('step-3-err', 'Income start age must be between 50 and 84.'), false;
+      }
+      state.incomeStartAge = startAgeVal;
+    } else {
+      state.incomeStartAge = null;
+    }
+    if (state.incomeType !== 'default') {
+      state.incomeValue = parseAmount('inp-income-val');
+    }
+    return true;
+  }
+  return true;
+}
+
+// ─── Age helper ──────────────────────────────────────────────────────────────
+function calcAge() {
+  var dob = new Date(document.getElementById('inp-dob').value);
+  var start = new Date(document.getElementById('inp-start').value || todayStr());
+  return (start - dob) / (365.25 * 24 * 3600 * 1000);
+}
+function onDobChange() {
+  markDirty();
+  var age = calcAge();
+  document.getElementById('hint-age').textContent = isNaN(age) ? '' : 'Age: ' + age.toFixed(1);
+  prefillIncomeStartAge(age);
+}
+
+function onStartChange() {
+  markDirty();
+  state.startDate = document.getElementById('inp-start').value;
+  var age = calcAge();
+  document.getElementById('hint-age').textContent = isNaN(age) ? '' : 'Age: ' + age.toFixed(1);
+  prefillIncomeStartAge(age);
+}
+
+function prefillIncomeStartAge(entryAge) {
+  if (isNaN(entryAge)) return;
+  var defaultStart = entryAge >= 61 ? Math.ceil(entryAge) : 61;
+  var el = document.getElementById('inp-income-start-age');
+  el.value = defaultStart;
+  el.min = Math.floor(entryAge);
+  state.incomeStartAge = defaultStart;
+  updateIncomeStartHint();
+}
+
+// ─── Version / code ───────────────────────────────────────────────────────────
+function setVersion(v) {
+  state.version = v;
+  ['A','B','C','D','F'].forEach(function(x){
+    document.getElementById('tg-v' + x).classList.toggle('active', x === v);
+  });
+  var hints = { A:'Version A: standard broker distribution', B:'Version B: mid-level admin charge', C:'Version C: lower admin, adviser fee model', D:'Version D: fee-based, no commission', F:'Version F: enhanced service level' };
+  document.getElementById('hint-version').textContent = hints[v] || '';
+  rebuildCodeSelect();
+  markDirty();
+}
+function onCodeChange() {
+  state.code = document.getElementById('sel-code').value;
+  markDirty();
+}
+function rebuildCodeSelect() {
+  var sel = document.getElementById('sel-code');
+  sel.innerHTML = '';
+  Object.keys(ARF_CODES).forEach(function(k) {
+    var cc = ARF_CODES[k];
+    if (cc.version !== state.version) return;
+    var opt = document.createElement('option');
+    opt.value = k;
+    var parts = [k + ' — Admin ' + pct(cc.admin) + ', Ongoing ' + pct(cc.ongoing)];
+    if (cc.spUp > 0) parts.push('SP Upfront ' + pct(cc.spUp));
+    opt.textContent = parts.join(', ');
+    sel.appendChild(opt);
+  });
+  // default to last code in version (highest commission)
+  var codes = Object.keys(ARF_CODES).filter(function(k){ return ARF_CODES[k].version === state.version; });
+  state.code = codes[codes.length - 1] || codes[0];
+  sel.value = state.code;
+}
+
+// ─── DIY fund picker ─────────────────────────────────────────────────────────
+function rebuildFundCards() {
+  var grid = document.getElementById('fund-card-grid');
+  grid.innerHTML = '';
+  ARF_FUNDS.forEach(function(f) {
+    var sel = !!state.diySelected[f.id];
+    var div = document.createElement('div');
+    div.className = 'fund-card' + (sel ? ' selected' : '');
+    div.innerHTML =
+      '<div class="fund-card-check">✓</div>' +
+      '<div class="fund-card-dot" style="background:' + f.color + '"></div>' +
+      '<div class="fund-card-name">' + f.name + '</div>' +
+      '<div class="fund-card-rate">' + (f.grossRate * 100).toFixed(2) + '% p.a. gross' +
+        (f.gmab ? ' &nbsp;&#x1F512;' : '') + '</div>';
+    div.onclick = (function(fid){ return function(){ toggleFundCard(fid); }; })(f.id);
+    grid.appendChild(div);
+  });
+  updateFundSelectCount();
+}
+
+function toggleFundCard(id) {
+  state.diySelected[id] = !state.diySelected[id];
+  if (!state.diySelected[id]) { delete state.diyAllocs[id]; delete state.diyGmab[id]; }
+  rebuildFundCards();
+  markDirty();
+}
+
+function updateFundSelectCount() {
+  var n = Object.keys(state.diySelected).filter(function(id){ return state.diySelected[id]; }).length;
+  document.getElementById('fund-select-count').textContent = n === 0 ? 'No funds selected' : n + ' fund' + (n===1?'':'s') + ' selected';
+  var btn = document.getElementById('btn-to-allocate');
+  btn.disabled = n === 0;
+  btn.style.opacity = n === 0 ? '0.4' : '1';
+  btn.style.cursor = n === 0 ? 'default' : 'pointer';
+}
+
+function goToAllocate() {
+  var selected = Object.keys(state.diySelected).filter(function(id){ return state.diySelected[id]; });
+  if (!selected.length) return;
+  // Remove allocs for deselected funds
+  Object.keys(state.diyAllocs).forEach(function(id){
+    if (!state.diySelected[id]) delete state.diyAllocs[id];
+  });
+  // Equal split if no allocs set yet
+  var hasAllocs = selected.some(function(id){ return (state.diyAllocs[id]||0) > 0; });
+  if (!hasAllocs) equaliseAllocs(true);
+  document.getElementById('diy-phase-select').style.display = 'none';
+  document.getElementById('diy-phase-allocate').style.display = 'block';
+  rebuildFundRows();
+}
+
+function goToSelect() {
+  document.getElementById('diy-phase-allocate').style.display = 'none';
+  document.getElementById('diy-phase-select').style.display = 'block';
+  rebuildFundCards();
+}
+
+function equaliseAllocs(silent) {
+  var selected = Object.keys(state.diySelected).filter(function(id){ return state.diySelected[id]; });
+  if (!selected.length) return;
+  var each = Math.floor(100 / selected.length * 100) / 100;
+  var rem = Math.round((100 - each * selected.length) * 100) / 100;
+  selected.forEach(function(id, i){ state.diyAllocs[id] = i === 0 ? each + rem : each; });
+  if (!silent) rebuildFundRows();
+  markDirty();
+}
+
+function rebuildFundRows() {
+  var selected = Object.keys(state.diySelected).filter(function(id){ return state.diySelected[id]; });
+  var container = document.getElementById('fund-rows');
+  container.innerHTML = '';
+  selected.forEach(function(id) {
+    var f = ARF_FUNDS_MAP[id];
+    var alloc = state.diyAllocs[id] || 0;
+    var row = document.createElement('div');
+    row.className = 'fund-row';
+    var gteeHtml = '';
+    if (f.gmab) {
+      var gteeOn = !!state.diyGmab[id];
+      gteeHtml = '<button class="fund-gtee-btn' + (gteeOn ? ' active' : '') + '" id="gtee-btn-' + id + '" onclick="toggleGtee(\'' + id + '\')">' + (gteeOn ? 'Gtee On' : 'Gtee Off') + '</button>';
+    } else {
+      gteeHtml = '<div class="fund-gtee-spacer"></div>';
+    }
+    row.innerHTML =
+      '<div class="fund-dot" style="background:' + f.color + '"></div>' +
+      '<div class="fund-name">' + f.shortName + '</div>' +
+      '<div class="fund-rate">' + (f.grossRate * 100).toFixed(2) + '%</div>' +
+      gteeHtml +
+      '<input class="fund-inp" type="number" min="0" max="100" step="0.1" value="' + alloc + '" ' +
+        'id="alloc-inp-' + id + '" oninput="onAllocChange(\'' + id + '\')">' +
+      '<div class="fund-pct">%</div>';
+    container.appendChild(row);
+  });
+  updateAllocBar();
+  updateFundTotal();
+}
+
+function toggleGtee(id) {
+  state.diyGmab[id] = !state.diyGmab[id];
+  var btn = document.getElementById('gtee-btn-' + id);
+  if (btn) { btn.classList.toggle('active', state.diyGmab[id]); btn.textContent = state.diyGmab[id] ? 'Gtee On' : 'Gtee Off'; }
+  markDirty();
+}
+
+function onAllocChange(id) {
+  var val = parseFloat(document.getElementById('alloc-inp-' + id).value) || 0;
+  state.diyAllocs[id] = val;
+  updateAllocBar();
+  updateFundTotal();
+  markDirty();
+}
+
+function updateAllocBar() {
+  var bar = document.getElementById('alloc-bar');
+  if (!bar) return;
+  var selected = Object.keys(state.diySelected).filter(function(id){ return state.diySelected[id]; });
+  var total = 0;
+  selected.forEach(function(id){ total += state.diyAllocs[id] || 0; });
+  bar.innerHTML = '';
+  if (total <= 0) return;
+  selected.forEach(function(id) {
+    var pctVal = (state.diyAllocs[id] || 0) / total;
+    var seg = document.createElement('div');
+    seg.className = 'alloc-bar-seg';
+    seg.style.width = (pctVal * 100) + '%';
+    seg.style.background = ARF_FUNDS_MAP[id].color;
+    bar.appendChild(seg);
+  });
+}
+
+function updateFundTotal() {
+  var selected = Object.keys(state.diySelected).filter(function(id){ return state.diySelected[id]; });
+  var total = 0;
+  selected.forEach(function(id){ total += state.diyAllocs[id] || 0; });
+  var el = document.getElementById('fund-total-val');
+  if (el) {
+    el.textContent = Math.round(total * 100) / 100 + '%';
+    el.style.color = Math.abs(total - 100) < 0.005 ? 'var(--grn)' : 'var(--red)';
+  }
+}
+
+function restoreDiyPhase() {
+  var hasSelected = Object.keys(state.diySelected).some(function(id){ return state.diySelected[id]; });
+  var hasAllocs   = Object.keys(state.diyAllocs).some(function(id){ return (state.diyAllocs[id]||0) > 0; });
+  if (hasSelected && hasAllocs) {
+    document.getElementById('diy-phase-select').style.display = 'none';
+    document.getElementById('diy-phase-allocate').style.display = 'block';
+    rebuildFundRows();
+  } else {
+    document.getElementById('diy-phase-select').style.display = 'block';
+    document.getElementById('diy-phase-allocate').style.display = 'none';
+    rebuildFundCards();
+  }
+}
+
+// ─── Income type ─────────────────────────────────────────────────────────────
+function setIncomeType(t) {
+  state.incomeType = t;
+  ['default','amount','pct'].forEach(function(x){
+    document.getElementById('inc-' + x).classList.remove('active');
+  });
+  var map = { default:'default', custom_amount:'amount', custom_pct:'pct' };
+  document.getElementById('inc-' + map[t]).classList.add('active');
+  var valWrap = document.getElementById('income-val-wrap');
+  valWrap.style.display = (t !== 'default') ? 'flex' : 'none';
+  var floorNote = document.getElementById('income-floor-note');
+  floorNote.style.display = (t !== 'default') ? 'block' : 'none';
+  var lbl = document.getElementById('income-inp-label');
+  if (t === 'custom_amount') lbl.textContent = 'Annual Income (€)';
+  if (t === 'custom_pct')    lbl.textContent = 'Annual Withdrawal %';
+  updateIncomeStartHint();
+  markDirty();
+}
+
+function onIncomeStartAgeChange() {
+  state.incomeStartAge = parseInt(document.getElementById('inp-income-start-age').value) || null;
+  updateIncomeStartHint();
+  markDirty();
+}
+
+function updateIncomeStartHint() {
+  var el = document.getElementById('hint-income-start');
+  var age = state.incomeStartAge;
+  if (!age) { el.textContent = ''; return; }
+  if (state.incomeType === 'default') {
+    if (age < 61) el.textContent = 'No deemed income before age 61 — fund grows only until then.';
+    else          el.textContent = 'Revenue deemed distribution applies from this age.';
+  } else {
+    if (age < 61) el.textContent = 'Custom income starts here; deemed floor applies from age 61.';
+    else          el.textContent = 'Custom income starts here; deemed floor applies throughout.';
+  }
+}
+
+// ─── Blended fund metrics ─────────────────────────────────────────────────────
+function blendedMetrics() {
+  var gross = 0, ext = 0, gtee = 0;
+  Object.keys(state.diyAllocs).forEach(function(id) {
+    var pctVal = (state.diyAllocs[id] || 0) / 100;
+    var f = ARF_FUNDS_MAP[id];
+    if (!f || pctVal <= 0) return;
+    gross += pctVal * f.grossRate;
+    ext   += pctVal * f.extFund;
+    gtee  += pctVal * ((state.diyGmab[id] && f.gmab) ? f.gteeCharge : 0);
+  });
+  return { gross: gross, ext: ext, gtee: gtee };
+}
+
+// ─── Projection engine ───────────────────────────────────────────────────────
+function runProjection(annualGrossRate) {
+  var cc = ARF_CODES[state.code];
+  var bm = blendedMetrics();
+
+  var totalMonthlyCharge = (cc.admin + bm.ext + bm.gtee) / 12;
+  var monthlyGrowRate    = Math.pow(1 + annualGrossRate, 1/12) - 1;
+
+  var dob       = new Date(state.dob);
+  var startDate = new Date(state.startDate);
+  var startAge  = (startDate - dob) / (365.25 * 24 * 3600 * 1000);
+  var contrib   = state.contribution;
+
+  // Initial chosen annual income
+  var startChosenAnnual = 0;
+  if (state.incomeType === 'custom_amount') {
+    startChosenAnnual = state.incomeValue || 0;
+  } else if (state.incomeType === 'custom_pct') {
+    startChosenAnnual = contrib * (state.incomeValue || 0) / 100;
+  }
+
+  var fund = contrib;
+  var cumGrowth = 0, cumCharges = 0, cumIncome = 0;
+  var rows = [], commRows = [];
+  var month = 0, MAX_MONTHS = 40 * 12;
+  var fundZeroYear = null;
+  var yrGrowth = 0, yrComm = 0, yrIncome = 0;
+  var fundByYear = [contrib]; // year-end fund values for chart
+
+  while (fund > 0.5 && month < MAX_MONTHS) {
+    month++;
+    var yr = Math.ceil(month / 12);
+    var ageNow = startAge + month / 12;
+
+    // Revenue deemed distribution (monthly rate)
+    var deemedRateM;
+    if (fund >= 2000000)   deemedRateM = ARF_DEEMED.over2m / 12;
+    else if (ageNow >= 71) deemedRateM = ARF_DEEMED.age71  / 12;
+    else if (ageNow >= 61) deemedRateM = ARF_DEEMED.age61  / 12;
+    else                   deemedRateM = 0;
+
+    // Growth
+    var growth = fund * monthlyGrowRate;
+    // Charges — mid-point method
+    var chargesM = (fund + growth / 2) * totalMonthlyCharge;
+    var fundAC = Math.max(0, fund + growth - chargesM);
+
+    // Income — suppressed entirely before income start age
+    var incomeActive = !state.incomeStartAge || ageNow >= state.incomeStartAge;
+    var deemedM = incomeActive ? fundAC * deemedRateM : 0;
+    var escF    = Math.pow(1 + ARF_INCOME_ESC, yr - 1);
+    var chosenM = (incomeActive && startChosenAnnual > 0) ? (startChosenAnnual * escF / 12) : deemedM;
+    var incomeM = Math.min(Math.max(chosenM, deemedM), fundAC);
+
+    // Ongoing commission (for disclosure)
+    var commM = fundAC * cc.ongoing / 12;
+    if (month === 1) commM += cc.spUp * contrib;
+
+    fund = fundAC - incomeM;
+    if (fund < 0) fund = 0;
+
+    cumGrowth   += growth;
+    cumCharges  += chargesM;
+    cumIncome   += incomeM;
+    yrGrowth    += growth;
+    yrComm      += commM;
+    yrIncome    += incomeM;
+
+    // Year-end
+    if (month % 12 === 0 || fund <= 0.5) {
+      var spRate     = (yr <= cc.surrender.length) ? cc.surrender[yr - 1] : 0;
+      var surPenalty = spRate * contrib;
+      fundByYear.push(Math.round(fund));
+
+      if (MILESTONES[yr] || fund <= 0.5) {
+        rows.push({
+          year: yr,
+          A: contrib,
+          B: Math.round(cumGrowth),
+          C: Math.round(cumCharges + surPenalty),
+          D: Math.round(cumIncome),
+          E: Math.round(fund),
+          yrIncome: Math.round(yrIncome)
+        });
+        commRows.push({ year: yr, contrib: yr === 1 ? contrib : 0, comm: Math.round(yrComm) });
+      }
+
+      if (fund <= 0.5) { fundZeroYear = yr; break; }
+      yrGrowth = 0; yrComm = 0; yrIncome = 0;
+    }
+  }
+
+  var netAnnual = Math.pow(1 + (monthlyGrowRate - totalMonthlyCharge), 12) - 1;
+  return { rows: rows, commRows: commRows, fundZeroYear: fundZeroYear,
+           effectiveGross: annualGrossRate, netRate: netAnnual,
+           chargeRate: cc.admin + bm.ext + bm.gtee, fundByYear: fundByYear };
+}
+
+// ─── Compute & show results ───────────────────────────────────────────────────
+function computeAndShowResults() {
+  var bm   = blendedMetrics();
+  var rate1 = Math.min(bm.gross, ARF_MAX_RATE);
+  var rate2 = ARF_RATE_2;
+
+  var p1 = runProjection(rate1);
+  var p2 = runProjection(rate2);
+  illResult = { p1: p1, p2: p2, rate1: rate1, rate2: rate2, bm: bm };
+
+  renderResults();
+  renderCommission();
+  document.getElementById('results-wrap').style.display = 'block';
+  document.getElementById('wizard-bar').style.display = 'none';
+  document.querySelectorAll('.step-panel').forEach(function(p){ p.classList.remove('active'); });
+  showResultTab('ill');
+  dirty = false;
+}
+
+function renderResults() {
+  var r = illResult;
+  var cc = ARF_CODES[state.code];
+  var startAge = (new Date(state.startDate) - new Date(state.dob)) / (365.25 * 24 * 3600 * 1000);
+
+  // Starting annual income estimate
+  var startIncome;
+  if (state.incomeType === 'custom_amount') {
+    startIncome = state.incomeValue || 0;
+  } else if (state.incomeType === 'custom_pct') {
+    startIncome = state.contribution * (state.incomeValue || 0) / 100;
+  } else {
+    var dr = startAge >= 71 ? 0.05 : startAge >= 61 ? 0.04 : 0;
+    startIncome = state.contribution * dr;
+  }
+
+  // Summary band
+  document.getElementById('ill-name').textContent = state.name + ' — ARF Point of Issue';
+  document.getElementById('ill-sub').textContent = 'Product Version ' + cc.version + ' | Code ' + state.code + ' | ' + euro(state.contribution) + ' contribution';
+
+  var fundLabels = Object.keys(state.diyAllocs)
+    .filter(function(id){ return (state.diyAllocs[id]||0) > 0; })
+    .map(function(id){ return ARF_FUNDS_MAP[id].shortName + ' ' + (state.diyAllocs[id]||0) + '%'; })
+    .join(' / ');
+  document.getElementById('ill-params').innerHTML =
+    param((r.rate1 * 100).toFixed(2) + '%', 'Growth Rate 1', '') +
+    param((r.rate2 * 100).toFixed(2) + '%', 'Growth Rate 2', '') +
+    param(euro(startIncome), 'Starting Income', 'pa');
+
+  // Cards
+  document.getElementById('ill-cards').innerHTML =
+    card(r.p1.fundZeroYear ? 'Year ' + r.p1.fundZeroYear : '40+', 'Fund Depletion (Rate 1)', (r.rate1 * 100).toFixed(2) + '% growth', '#003781') +
+    card(r.p2.fundZeroYear ? 'Year ' + r.p2.fundZeroYear : '40+', 'Fund Depletion (Rate 2)', (r.rate2 * 100).toFixed(2) + '% growth', '#13a0d3') +
+    card(euro(startIncome), 'Starting Annual Income', state.incomeType === 'default' ? 'Revenue deemed distribution' : 'Custom', '#1a9e5c') +
+    card((r.p1.netRate * 100).toFixed(2) + '%', 'Net Rate (Rate 1)', 'After charges', '#4a5a6a');
+
+  // Chart
+  renderChart(r.p1.fundByYear, r.p2.fundByYear);
+
+  // Table (Rate 1)
+  document.getElementById('tbl-rate1-label').textContent = (r.rate1 * 100).toFixed(2);
+  var tbody = document.getElementById('ill-tbl-body');
+  tbody.innerHTML = '';
+  r.p1.rows.forEach(function(row) {
+    var tr = document.createElement('tr');
+    tr.innerHTML = '<td>Year ' + row.year + '</td>' +
+      '<td>' + euro(row.A) + '</td><td>' + euro(row.B) + '</td>' +
+      '<td>' + euro(row.C) + '</td><td>' + euro(row.D) + '</td>' +
+      '<td style="font-weight:700;color:' + (row.E === 0 ? 'var(--red)' : 'var(--navy)') + '">' + (row.E === 0 ? '— Depleted' : euro(row.E)) + '</td>';
+    tbody.appendChild(tr);
+  });
+
+  // Income chart
+  renderIncomeChart();
+
+  // Disclaimer
+  var spHasAny = cc.surrender.some(function(x){ return x > 0; });
+  document.getElementById('ill-disc').innerHTML =
+    'Illustrated at a gross growth rate of ' + (r.rate1 * 100).toFixed(2) + '% per annum. ' +
+    'Total annual charge rate ' + (r.p1.chargeRate * 100).toFixed(2) + '% reduces effective return to approximately ' + (r.p1.netRate * 100).toFixed(2) + '%. ' +
+    (spHasAny ? 'Column C for years 1&ndash;5 includes a hypothetical exit charge as if the policy were fully encashed (no exit charge applies to partial surrenders). ' : '') +
+    'Income and policy value figures shown gross of tax. These projections are for illustrative purposes only and are not guaranteed.';
+}
+
+function param(val, lbl, unit) {
+  return '<div class="pm"><div class="pml">' + lbl + '</div><div class="pmv">' + val + '</div><div class="pmu">' + unit + '</div></div>';
+}
+function card(val, lbl, sub, col) {
+  return '<div class="sc"><div class="sl">' + lbl + '</div><div class="sv" style="color:' + col + '">' + val + '</div><div class="ss">' + sub + '</div></div>';
+}
+
+// ─── Chart ───────────────────────────────────────────────────────────────────
+function renderChart(vals1, vals2) {
+  var maxYr = Math.max(vals1.length, vals2.length);
+  var labels = [];
+  for (var i = 0; i < maxYr; i++) labels.push(i === 0 ? 'Start' : 'Yr ' + i);
+
+  // Pad shorter array with 0
+  while (vals1.length < maxYr) vals1.push(0);
+  while (vals2.length < maxYr) vals2.push(0);
+
+  if (arfChart) arfChart.destroy();
+  var ctx = document.getElementById('arf-chart').getContext('2d');
+  arfChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [
+        {
+          label: 'Rate 1 (' + (illResult.rate1 * 100).toFixed(2) + '%)',
+          data: vals1,
+          borderColor: '#003781',
+          backgroundColor: 'rgba(0,55,129,0.08)',
+          fill: true,
+          tension: 0.3,
+          pointRadius: 0,
+          borderWidth: 2.5
+        },
+        {
+          label: 'Rate 2 (' + (illResult.rate2 * 100).toFixed(2) + '%)',
+          data: vals2,
+          borderColor: '#13a0d3',
+          backgroundColor: 'rgba(19,160,211,0.05)',
+          fill: true,
+          tension: 0.3,
+          pointRadius: 0,
+          borderWidth: 2,
+          borderDash: [5, 3]
+        }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'top', labels: { font: { size: 12 }, usePointStyle: true } } },
+      scales: {
+        x: { grid: { display: false }, ticks: { maxTicksLimit: 10, font: { size: 11 } } },
+        y: {
+          beginAtZero: true,
+          ticks: {
+            font: { size: 11 },
+            callback: function(v) { return '€' + (v >= 1000 ? (v/1000).toFixed(0) + 'k' : v); }
+          }
+        }
+      }
+    }
+  });
+}
+
+// ─── Result tabs ─────────────────────────────────────────────────────────────
+function showResultTab(id) {
+  ['ill','comm'].forEach(function(t){
+    document.getElementById('rtab-' + t).classList.toggle('active', t === id);
+    document.getElementById('rpanel-' + t).classList.toggle('active', t === id);
+  });
+}
+
+// ─── Chart collapse toggle ────────────────────────────────────────────────────
+function toggleChart(wrapId, btn) {
+  var wrap = document.getElementById(wrapId);
+  var isCollapsed = wrap.classList.toggle('collapsed');
+  btn.classList.toggle('collapsed', isCollapsed);
+}
+
+// ─── Annual income chart ──────────────────────────────────────────────────────
+function renderIncomeChart() {
+  var r = illResult;
+
+  document.getElementById('inc-chart-subtitle').textContent =
+    '— ' + (r.rate1 * 100).toFixed(2) + '% vs ' + (r.rate2 * 100).toFixed(2) + '%';
+
+  // Union of milestone years from both scenarios, sorted
+  var seen = {}, years = [];
+  r.p1.rows.concat(r.p2.rows).forEach(function(row) {
+    if (!seen[row.year]) { seen[row.year] = true; years.push(row.year); }
+  });
+  years.sort(function(a, b) { return a - b; });
+
+  var map1 = {}, map2 = {};
+  r.p1.rows.forEach(function(row) { map1[row.year] = row.yrIncome; });
+  r.p2.rows.forEach(function(row) { map2[row.year] = row.yrIncome; });
+
+  var labels  = years.map(function(y) { return 'Yr ' + y; });
+  var data1   = years.map(function(y) { return map1[y] != null ? map1[y] : null; });
+  var data2   = years.map(function(y) { return map2[y] != null ? map2[y] : null; });
+
+  if (incomeChart) incomeChart.destroy();
+  var ctx = document.getElementById('income-chart').getContext('2d');
+  incomeChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [
+        {
+          label: 'Rate 1 (' + (r.rate1 * 100).toFixed(2) + '%)',
+          data: data1,
+          backgroundColor: 'rgba(0,55,129,0.75)',
+          borderColor: '#003781',
+          borderWidth: 1,
+          borderRadius: 3,
+          barPercentage: 0.7,
+          categoryPercentage: 0.8
+        },
+        {
+          label: 'Rate 2 (' + (r.rate2 * 100).toFixed(2) + '%)',
+          data: data2,
+          backgroundColor: 'rgba(19,160,211,0.65)',
+          borderColor: '#13a0d3',
+          borderWidth: 1,
+          borderRadius: 3,
+          barPercentage: 0.7,
+          categoryPercentage: 0.8
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'top', labels: { font: { size: 12 }, usePointStyle: true } },
+        tooltip: {
+          callbacks: {
+            label: function(ctx) {
+              return ctx.dataset.label + ': ' + (ctx.raw != null ? euro(ctx.raw) : 'Depleted');
+            }
+          }
+        }
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: { font: { size: 11 } } },
+        y: {
+          beginAtZero: true,
+          ticks: {
+            font: { size: 11 },
+            callback: function(v) { return '€' + (v >= 1000 ? (v / 1000).toFixed(0) + 'k' : v); }
+          }
+        }
+      }
+    }
+  });
+}
+
+// ─── Commission tab ───────────────────────────────────────────────────────────
+function renderCommission() {
+  var r  = illResult;
+  var cc = ARF_CODES[state.code];
+
+  document.getElementById('comm-rate1-hdr').textContent = (r.rate1 * 100).toFixed(2);
+  document.getElementById('comm-rate2-hdr').textContent = (r.rate2 * 100).toFixed(2);
+
+  document.getElementById('comm-info-grid').innerHTML =
+    '<div class="info-cell"><div class="info-lbl">SP Upfront Commission</div><div class="info-val">' + (cc.spUp > 0 ? pct(cc.spUp) : 'None') + '</div></div>' +
+    '<div class="info-cell"><div class="info-lbl">Ongoing Commission (pa)</div><div class="info-val">' + (cc.ongoing > 0 ? pct(cc.ongoing) : 'None') + '</div></div>' +
+    '<div class="info-cell"><div class="info-lbl">Admin Charge (pa)</div><div class="info-val">' + pct(cc.admin) + '</div></div>';
+
+  var tbody = document.getElementById('comm-tbody');
+  tbody.innerHTML = '';
+  var maxRows = Math.max(r.p1.commRows.length, r.p2.commRows.length);
+  for (var i = 0; i < maxRows; i++) {
+    var c1 = r.p1.commRows[i] || { year: r.p2.commRows[i].year, contrib: 0, comm: 0 };
+    var c2 = r.p2.commRows[i] || { year: r.p1.commRows[i].year, contrib: 0, comm: 0 };
+    var contrib = c1.contrib || c2.contrib;
+    var tr = document.createElement('tr');
+    tr.innerHTML =
+      '<td>Year ' + c1.year + '</td>' +
+      '<td>' + (contrib > 0 ? euro(contrib) : '&mdash;') + '</td>' +
+      '<td>' + euro(c1.comm) + '</td>' +
+      '<td>' + euro(c2.comm) + '</td>';
+    tbody.appendChild(tr);
+  }
+
+  var spAmt = cc.spUp * state.contribution;
+  document.getElementById('comm-disc').innerHTML =
+    'Remuneration figures represent projected intermediary and sales remuneration. ' +
+    (spAmt > 0 ? 'Single premium upfront commission of ' + euro(spAmt) + ' is payable in month 1. ' : '') +
+    (cc.ongoing > 0 ? 'Ongoing commission of ' + pct(cc.ongoing) + ' per annum is deducted from the admin charge and paid to the intermediary monthly. ' : '') +
+    'Amounts differ between scenarios due to differences in projected fund values. Commission clawback applies on cool-off only (within 30 days of policy inception) — no clawback applies on surrender.';
+}
+
+// ─── Generate POI Document ───────────────────────────────────────────────────
+function generateDocument() { // REPLACED BELOW — keeping signature for grep
+  _generateDocumentImpl();
+}
+function _generateDocumentImpl() {
+  var r  = illResult;
+  var cc = ARF_CODES[state.code];
+
+  var startDate = new Date(state.startDate);
+  var dob       = new Date(state.dob);
+  var startAge  = (startDate - dob) / (365.25 * 24 * 3600 * 1000);
+  var totalPages = 8;
+
+  function fe(n) { return Math.round(n).toLocaleString('en-IE'); }
+
+  var dateStr = startDate.toLocaleDateString('en-IE', { day:'2-digit', month:'2-digit', year:'numeric' });
+  var hasGuarantee = Object.keys(state.diyGmab).some(function(id){ return state.diyGmab[id] && ARF_FUNDS_MAP[id] && ARF_FUNDS_MAP[id].gmab; });
+  var spHasAny = cc.surrender.some(function(x){ return x > 0; });
+  var rate1Pct = (r.rate1 * 100).toFixed(2);
+  var rate2Pct = (r.rate2 * 100).toFixed(2);
+  var riy1Pct  = (r.p1.netRate * 100).toFixed(2);
+  var riy2Pct  = (r.p2.netRate * 100).toFixed(2);
+
+  var incomeStartAge = state.incomeStartAge || 61;
+  var deferNote = incomeStartAge > Math.ceil(startAge)
+    ? ' Income is deferred until age ' + incomeStartAge + '. Please note that Revenue deemed distribution taxation applies from age 61 regardless of when physical withdrawals begin.'
+    : '';
+  var incomeSentence;
+  if (state.incomeType === 'default') {
+    incomeSentence = 'You have chosen an income level in line with the Revenue deemed distribution rules in respect of this ARF. These are described below.' + deferNote;
+  } else if (state.incomeType === 'custom_amount') {
+    incomeSentence = 'You have chosen an initial income of €' + fe(state.incomeValue || 0) + ' per annum. For the purpose of this illustration, if this income level is lower than the Revenue deemed distribution requirements, the income taken will be the higher amount.' + deferNote;
+  } else {
+    var pctIncome = state.contribution * (state.incomeValue || 0) / 100;
+    incomeSentence = 'You have chosen an initial income of ' + (state.incomeValue || 0).toFixed(2) + '% of the fund per annum (€' + fe(pctIncome) + '). For the purpose of this illustration, if this income level is lower than the Revenue deemed distribution requirements, the income taken will be the higher amount.' + deferNote;
+  }
+
+  var depletion1 = r.p1.fundZeroYear
+    ? 'Payment of income that is assumed to escalate each year, will deplete your ARF fund over time. Under these assumptions your fund becomes fully depleted in year ' + r.p1.fundZeroYear + ', at which point your policy will terminate. Where the income you choose is higher relative to the size of your fund, or the investment return achieved by your fund is lower, your fund may become depleted earlier.'
+    : 'Under these assumptions the fund is not projected to deplete within 40 years.';
+  var depletion2 = r.p2.fundZeroYear
+    ? 'Under these assumptions your fund becomes fully depleted in year ' + r.p2.fundZeroYear + ', at which point your policy will terminate.'
+    : 'Under these assumptions the fund is not projected to deplete within 40 years.';
+
+  // Build projection table matching sample style exactly
+  function projTable(rows) {
+    var t = '<p class="tbl-sub">Illustrative table of projected benefits and charges.</p>';
+    t += '<table class="ptbl"><thead>';
+    t += '<tr><td></td><td class="ltr">A</td><td class="ltr">B</td><td class="ltr">C</td><td class="ltr">D</td><td class="ltr">E=A+B-C-D</td></tr>';
+    t += '<tr><td></td>' +
+      '<td class="desc">Total amount of contributions paid into the policy to date</td>' +
+      '<td class="desc">Projected investment growth to date</td>' +
+      '<td class="desc">Projected charges to date</td>' +
+      '<td class="desc">Cumulative gross income to date</td>' +
+      '<td class="desc">Projected policy value after income</td></tr>';
+    t += '<tr class="unit-row"><td class="yr-lbl">Year</td><td>&euro;</td><td>&euro;</td><td>&euro;</td><td>&euro;</td><td>&euro;</td></tr>';
+    t += '</thead><tbody>';
+    rows.forEach(function(row) {
+      var eVal = row.E === 0 ? '0' : fe(row.E);
+      t += '<tr class="drow"><td class="yr">' + row.year + '</td>' +
+        '<td>' + fe(row.A) + '</td><td>' + fe(row.B) + '</td>' +
+        '<td>' + fe(row.C) + '</td><td>' + fe(row.D) + '</td>' +
+        '<td class="eval">' + eVal + '</td></tr>';
+    });
+    t += '</tbody></table>';
+    return t;
+  }
+
+  // Build commission table matching sample
+  function commTable() {
+    var rows1 = r.p1.commRows, rows2 = r.p2.commRows;
+    var maxR = Math.max(rows1.length, rows2.length);
+    var t = '<p class="tbl-sub">Illustrative table of Remuneration or Sales Remuneration.</p>';
+    t += '<table class="ctbl"><thead>';
+    t += '<tr>' +
+      '<td class="chdr">Year</td>' +
+      '<td class="chdr">Contributions payable in that year</td>' +
+      '<td class="chdr">Projected total intermediary/sales remuneration/brokerage fee payable in that year<br>(' + rate1Pct + '% growth)</td>' +
+      '<td class="chdr">Projected total intermediary/sales remuneration/brokerage fee payable in that year<br>(' + rate2Pct + '% growth)</td>' +
+      '</tr>';
+    t += '<tr class="unit-row"><td></td><td>&euro;</td><td>&euro;</td><td>&euro;</td></tr>';
+    t += '</thead><tbody>';
+    for (var i = 0; i < maxR; i++) {
+      var c1 = rows1[i] || { year: rows2[i].year, contrib: 0, comm: 0 };
+      var c2 = rows2[i] || { year: rows1[i].year, contrib: 0, comm: 0 };
+      var contrib = c1.contrib || c2.contrib;
+      t += '<tr class="drow"><td class="yr">' + c1.year + '</td>' +
+        '<td>' + (contrib > 0 ? fe(contrib) : '-') + '</td>' +
+        '<td>' + fe(c1.comm) + '</td>' +
+        '<td>' + fe(c2.comm) + '</td></tr>';
+    }
+    t += '</tbody></table>';
+    return t;
+  }
+
+  // Page wrapper with two-col layout
+  function pg(n, content, leftExtra) {
+    var left = '<div class="dcol">' + dateStr + (leftExtra || '') + '</div>';
+    return '<div class="page">' +
+      '<img class="logo" src="allianz-logo.svg" alt="Allianz">' +
+      '<div class="pgbody">' + left + '<div class="mcol">' + content + '</div></div>' +
+      '<div class="pgfoot"><span>Allianz Vantage ARF (' + cc.version + ') Point of Issue Disclosure – ' + dateStr.slice(3) + '</span><span>' + n + '/' + totalPages + '</span></div>' +
+    '</div>';
+  }
+
+  function impBlock(ratePct) {
+    return '<p class="imp-lbl">IMPORTANT</p>' +
+      '<p class="imp-body">THESE ILLUSTRATIONS ASSUME A RETURN OF ' + ratePct + '% PER ANNUM.<br>' +
+      'THIS RATE IS FOR ILLUSTRATION PURPOSES ONLY AND IS NOT GUARANTEED.</p>' +
+      '<p class="imp-body">ACTUAL INVESTMENT GROWTH WILL DEPEND ON THE PERFORMANCE OF THE UNDERLYING INVESTMENTS AND MAY BE MORE OR LESS THAN ILLUSTRATED.</p>';
+  }
+
+  var CSS = [
+    '@page { size: A4; margin: 0; }',
+    '* { box-sizing: border-box; margin: 0; padding: 0; }',
+    'body { font-family: Arial, Helvetica, sans-serif; color: #1a1a1a; background: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }',
+    '.page { width: 210mm; height: 297mm; padding: 14mm 18mm 16mm; page-break-after: always; overflow: hidden; position: relative; }',
+    '.page:last-child { page-break-after: avoid; }',
+    '.logo { height: 34px; display: block; margin-bottom: 10mm; }',
+    '.pgbody { display: flex; gap: 18mm; }',
+    '.dcol { width: 28mm; flex-shrink: 0; font-size: 8pt; color: #444; line-height: 1.6; }',
+    '.dcol .dagl { font-weight: 700; font-size: 8pt; color: #1a1a1a; margin-top: 8px; }',
+    '.dcol .daddr { font-size: 7.5pt; color: #444; margin-top: 3px; line-height: 1.55; }',
+    '.dcol .dlink { font-size: 7.5pt; color: #0066b3; }',
+    '.dcol .dsupt { font-weight: 700; font-size: 7.5pt; margin-top: 8px; }',
+    '.mcol { flex: 1; min-width: 0; }',
+    // Cover
+    '.ctitle { margin-bottom: 10mm; }',
+    '.ctitle .t1 { font-size: 22pt; color: #1a1a1a; font-weight: 400; line-height: 1.25; }',
+    '.ctitle .t2 { font-size: 22pt; color: #0082be; font-weight: 700; line-height: 1.25; }',
+    '.ctitle .t3 { font-size: 22pt; color: #1a1a1a; font-weight: 700; line-height: 1.25; }',
+    '.phdr { font-size: 9pt; font-weight: 700; color: #003781; border-bottom: 1px solid #aaa; padding-bottom: 5px; margin-bottom: 8px; }',
+    '.prow { display: flex; align-items: center; gap: 7px; margin-bottom: 6px; font-size: 9pt; }',
+    '.pico { width: 18px; height: 18px; border: 1.5px solid #0082be; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 8pt; color: #0082be; flex-shrink: 0; }',
+    '.psec { margin-bottom: 12px; }',
+    // Section heading
+    '.shdr { font-size: 10.5pt; font-weight: 700; color: #003781; border-bottom: 1px solid #aaa; padding-bottom: 5px; margin-bottom: 10px; }',
+    // IMPORTANT block
+    '.imp-lbl { font-size: 9pt; font-weight: 700; text-decoration: underline; margin-bottom: 5px; }',
+    '.imp-body { font-size: 9pt; font-weight: 700; line-height: 1.45; margin-bottom: 6px; }',
+    // Body text
+    'p.bt { font-size: 9pt; line-height: 1.55; margin-bottom: 8px; color: #1a1a1a; }',
+    // Projection table
+    '.tbl-sub { font-size: 9pt; font-weight: 600; margin-bottom: 7px; }',
+    '.ptbl { width: 100%; border-collapse: collapse; font-size: 8.5pt; }',
+    '.ptbl .ltr { text-align: center; font-weight: 700; color: #003781; font-size: 10pt; padding: 0 3px 1px; }',
+    '.ptbl .desc { text-align: center; font-size: 7.5pt; color: #222; padding: 2px 3px 5px; line-height: 1.3; }',
+    '.ptbl .unit-row td { text-align: center; font-size: 8.5pt; border-bottom: 1px solid #888; padding: 3px 3px 7px; }',
+    '.ptbl .yr-lbl { text-align: left; font-weight: 700; }',
+    '.ptbl .drow td { text-align: center; padding: 5px 3px; border-bottom: 1px dashed #ccc; font-size: 8.5pt; }',
+    '.ptbl .yr { font-weight: 600; color: #003781; }',
+    '.ptbl .eval { font-weight: 700; }',
+    // Commission table
+    '.ctbl { width: 100%; border-collapse: collapse; font-size: 8.5pt; }',
+    '.ctbl .chdr { font-size: 7.5pt; font-weight: 700; color: #003781; text-align: center; padding: 0 3px 5px; vertical-align: bottom; line-height: 1.3; }',
+    '.ctbl .chdr:first-child { text-align: left; }',
+    '.ctbl .unit-row td { text-align: center; border-bottom: 1px solid #888; padding: 3px 3px 7px; font-size: 8.5pt; }',
+    '.ctbl .drow td { text-align: center; padding: 5px 3px; border-bottom: 1px dashed #ccc; }',
+    '.ctbl .yr { font-weight: 600; color: #003781; }',
+    // Footer line
+    '.pgfoot { position: absolute; bottom: 7mm; left: 18mm; right: 18mm; display: flex; justify-content: space-between; font-size: 7pt; color: #777; border-top: 0.5px solid #ccc; padding-top: 3px; }',
+    // Cover footer (directors)
+    '.covfoot { position: absolute; bottom: 7mm; left: 18mm; right: 18mm; font-size: 6.5pt; color: #555; line-height: 1.4; border-top: 0.5px solid #ccc; padding-top: 3px; display: flex; justify-content: space-between; align-items: flex-start; }',
+    // Cooling off
+    '.sig-block { margin: 12px 0 6px; font-size: 9pt; }',
+    '.sig-line { display: inline-block; border-bottom: 1px solid #1a1a1a; width: 160px; margin-left: 4px; vertical-align: bottom; }',
+    '.addr-block { font-size: 9pt; line-height: 1.7; margin: 6px 0 10px; }',
+    '.q-bold { font-size: 9pt; font-weight: 700; color: #003781; margin-top: 12px; }',
+    '.q-sub { font-size: 9pt; color: #0082be; }',
+    '.q-reg { font-size: 8.5pt; color: #444; margin-top: 8px; }'
+  ].join('\n');
+
+  // ── PAGE 1: Cover ────────────────────────────────────────────────────────────
+  var leftCol1 = '<div class="dagl">Allianz Global Life dac</div>' +
+    '<div class="daddr">Maple House,<br>Temple Road,<br>Blackrock,<br>Co. Dublin,<br>Ireland<br>' +
+    '<span class="dlink">www.allianzgloballife.ie</span></div>' +
+    '<div class="dsupt">For customer support</div>' +
+    '<div class="daddr">01 242 2333<br>customersupport@allianzgloballife.ie</div>';
+
+  var coverContent =
+    '<div class="ctitle">' +
+      '<div class="t1">Dear ' + state.name.split(' ')[0] + ', here’s your</div>' +
+      '<div class="t2">Allianz Vantage ARF (' + cc.version + ')</div>' +
+      '<div class="t3">Point of Issue Disclosure</div>' +
+    '</div>' +
+    '<div class="psec"><div class="phdr">Policy Details</div>' +
+      '<div class="prow"><span class="pico">☰</span>Policy number: ' + (state.policyNum || '&mdash;') + '</div>' +
+      '<div class="prow"><span class="pico">\u{1F464}</span>Policyholder: ' + state.name + '</div>' +
+      '<div class="prow"><span class="pico">\u{1F4C5}</span>Policy start date: ' + dateStr + '</div>' +
+    '</div>' +
+    '<div class="psec"><div class="phdr">Notice from Allianz Global Life</div>' +
+      '<p class="bt">Before signing the application form for your Allianz Vantage Approved Retirement Fund (ARF) policy, you received a point of sale disclosure document providing you with important information about your ARF. That document contained a generic illustration of projected benefits for a typical ARF contract. This document is a person-specific disclosure document which provides an illustration of projected benefits for your ARF, using your actual policy details, as set out in your policy schedule. It is an important document and should be read in conjunction with the point of sale disclosure document provided previously.</p>' +
+    '</div>';
+
+  var page1 = '<div class="page">' +
+    '<img class="logo" src="allianz-logo.svg" alt="Allianz">' +
+    '<div class="pgbody"><div class="dcol">' + dateStr + leftCol1 + '</div><div class="mcol">' + coverContent + '</div></div>' +
+    '<div class="covfoot">' +
+      '<span>Allianz Global Life dac<br>Directors: Caroline Schwarzer (German); Chair of the Board; Giampaolo Viseri (Italian); Chief Executive Officer; Michele Bricchi (Italian); Mary Fulton; Robert Scanell; Kai Wallbaum (German); Rebecca Wysocki (American).<br>Allianz Global Life Designated Activity Company is regulated by the Central Bank of Ireland. Registered in Dublin, Ireland. Company Reg. No.: 458565</span>' +
+      '<span style="white-space:nowrap;padding-left:8px;">1/' + totalPages + '</span>' +
+    '</div></div>';
+
+  // ── PAGE 2: Rate 1 table ─────────────────────────────────────────────────────
+  var page2Content = '<div class="shdr">1. &nbsp; What are the projected benefits under the policy?</div>' + projTable(r.p1.rows);
+  var page2 = pg(2, page2Content);
+
+  // ── PAGE 3: Rate 1 IMPORTANT + notes ─────────────────────────────────────────
+  var surNote = spHasAny
+    ? '<p class="bt">Please note that the charges shown in Column C for years 1 to 5 assume that policy is fully encashed and an exit charge is incurred. No exit charge applies to partial surrenders. If the policy is not encashed in the first 5 years, no exit charge is payable and the total charges actually deducted from the policy in those years are less than shown.</p>'
+    : '';
+  var page3Content =
+    impBlock(rate1Pct) +
+    '<p class="bt" style="margin-top:8px;">The deductions for charges shown in column C have the same effect as reducing the assumed investment growth from ' + rate1Pct + '% to ' + riy1Pct + '%. The illustration uses the current level of charges taken by the fund manager, which may vary in the future. Further details are available in the Schedule of Fees and Charges. The income figures in column D and the policy value figures in column E are shown gross of tax.</p>' +
+    '<p class="bt">' + incomeSentence + '</p>' +
+    '<p class="bt">For the purpose of this illustration, if the income level you have chosen is lower than the Revenue deemed distribution requirements, we assume that the income taken will be the higher amount. In addition, this illustration assumes that the income you receive will escalate by 2% per annum. This is designed to illustrate the impact of increasing income levels on the ability of your ARF to generate growing income over time. Note that in reality there is no obligation on you to take income levels that increase in this way.</p>' +
+    '<p class="bt">The Revenue deemed distribution rules require you to pay tax on income of 4% of the fund value starting in the year in which you turn 61, increasing to 5% in the year in which you turn 71. Where the fund value exceeds €2 million tax is paid on withdrawals of 6%.</p>' +
+    '<p class="bt">' + depletion1 + '</p>' +
+    surNote;
+  var page3 = pg(3, page3Content);
+
+  // ── PAGE 4: Rate 1 notes continued ───────────────────────────────────────────
+  var gteeParas = hasGuarantee
+    ? '<p class="bt">If you have elected to apply the optional rolling guarantee on any of your chosen investment funds, the charges in Column C assume that the investment guarantee is switched on throughout the projection. However, if you decide to switch it off at some point in the future, the total charges will be lower than shown. For any funds where you have not elected to apply the optional guarantee, it is assumed that the guarantee is switched off for the duration of the projection. If you decide to switch the guarantee on at some point in the future, the total charges will be higher than shown.</p>'
+    : '<p class="bt">For any funds where you have not elected to apply the optional guarantee, it is assumed that the guarantee is switched off for the duration of the projection. If you decide to switch the guarantee on at some point in the future, the total charges will be higher than shown.</p>';
+  var page4Content = gteeParas +
+    '<p class="bt">The single contribution payable for your policy will include all charges and intermediary/sales remuneration.</p>';
+  var page4 = pg(4, page4Content);
+
+  // ── PAGE 5: Rate 2 IMPORTANT + table + first note ────────────────────────────
+  var page5Content =
+    impBlock(rate2Pct) +
+    projTable(r.p2.rows) +
+    '<p class="bt" style="margin-top:8px;">The deductions for charges shown in column C have the same effect as reducing the assumed investment growth from ' + rate2Pct + '% to ' + riy2Pct + '%. The illustration uses the current level of charges taken by the fund manager, which may vary in the future. Further details are available in the Schedule of Fees and Charges. The income figures in column D and the policy value figures in column E are shown gross of tax.</p>';
+  var page5 = pg(5, page5Content);
+
+  // ── PAGE 6: Rate 2 notes ─────────────────────────────────────────────────────
+  var page6Content =
+    '<p class="bt">The income assumed in this illustration follows the approach described in the illustration table above, with differences in income amounts reflecting the difference in the illustrated investment growth rate. It is important to understand that where amounts are withdrawn from your ARF, the value of your investment will reduce and could run out, particularly if a high level of income is taken, returns from investment markets are poor or if you live a long time.</p>' +
+    '<p class="bt">' + depletion2 + '</p>';
+  var page6 = pg(6, page6Content);
+
+  // ── PAGE 7: Commission ────────────────────────────────────────────────────────
+  var page7Content =
+    '<div class="shdr">2. &nbsp; What Intermediary Remuneration or Sales Remuneration is payable?</div>' +
+    '<p class="bt">The projected remuneration figures on your policy can depend on the contribution made and the fund size, and so can vary depending on the investment return achieved by your ARF. The table shows projected remuneration in two different scenarios.</p>' +
+    commTable();
+  var page7 = pg(7, page7Content);
+
+  // ── PAGE 8: Cooling off ───────────────────────────────────────────────────────
+  var page8Content =
+    '<div class="shdr">3. &nbsp; Cooling-off notice</div>' +
+    '<p class="bt">If within the first 30 days of, when you receive your ARF policy, you decide that it is no longer suitable for your needs then you may cancel it by printing and signing this cooling off notice, and sending a scanned copy to us at customersupport@allianzgloballife.ie.</p>' +
+    '<p class="bt">Alternatively, you can post the signed cooling off notice to us at the address below.</p>' +
+    '<div class="addr-block">Operations Department,<br>Allianz Global Life,<br>Maple House,<br>Temple Road,<br>Blackrock,<br>Co. Dublin<br>A94 Y9E8</div>' +
+    '<p class="bt">The policy will terminate immediately once we receive this instruction.</p>' +
+    '<p class="bt">If it is received not later than 30 days after the date of issue of these policy documents then any single contribution paid to us will be refunded to the pension arrangement from which they were received, less a deduction to cover any fall in value between the time your contribution or transfer payment was invested and the time the instruction to cancel is sent to us.</p>' +
+    '<p class="bt" style="margin-top:10px;">I have changed my mind and wish to exercise my right to cool-off with respect to policy number ' + (state.policyNum || '&mdash;') + '.</p>' +
+    '<div class="sig-block"><br>Signature of ' + state.name + ': <span class="sig-line">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&gt;</span></div>' +
+    '<div class="sig-block" style="margin-top:12px;">Date: <span class="sig-line" style="width:110px;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&gt;</span></div>' +
+    '<div class="q-bold" style="margin-top:16px;">Do you have any questions?</div>' +
+    '<div class="q-sub">We’re here to listen. Call us on 01 2422333 or visit us at allianzgloballife.ie</div>' +
+    '<div class="q-reg">Allianz Global Life dac is regulated by the Central Bank of Ireland.</div>';
+  var page8 = pg(8, page8Content);
+
+  var baseHref = window.location.href.replace(/[^\/]*$/, '');
+  var docHtml = '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">' +
+    '<base href="' + baseHref + '">' +
+    '<title>Allianz Vantage ARF – Point of Issue Disclosure – ' + state.name + '</title>' +
+    '<style>' + CSS + '</style>' +
+    '<script>window.onload=function(){window.print();};<\/script>' +
+    '</head><body>' +
+    page1 + page2 + page3 + page4 + page5 + page6 + page7 + page8 +
+    '</body></html>';
+
+  var win = window.open('', '_blank');
+  win.document.write(docHtml);
+  win.document.close();
+}
+
+// ─── Initialise ───────────────────────────────────────────────────────────────
+(function init() {
+  document.getElementById('inp-start').value = todayStr();
+  state.startDate = todayStr();
+  setVersion('A');
+  rebuildCodeSelect();
+  // Default to A5
+  state.code = 'A5';
+  document.getElementById('sel-code').value = 'A5';
+})();
+</script>
+
+</body>
+</html>
