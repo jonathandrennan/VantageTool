@@ -51,8 +51,8 @@ body::before { content: ''; display: block; height: 4px; background: linear-grad
 .fg input:focus, .fg select:focus { border-color: var(--teal); }
 .fg input.err { border-color: var(--red); }
 .fg .hint { font-size: 11px; color: var(--tm2); margin-top: 2px; }
-.tgg { display: flex; border: 1.5px solid var(--gb); border-radius: 6px; overflow: hidden; align-self: flex-start; }
-.tg { background: var(--white); border: none; padding: 9px 14px; font-size: 13px; font-weight: 600; cursor: pointer; color: var(--tm2); transition: all .2s; }
+.tgg { display: flex; border: 1.5px solid var(--gb); border-radius: 6px; overflow: hidden; }
+.tg { background: var(--white); border: none; padding: 9px 14px; font-size: 13px; font-weight: 600; cursor: pointer; color: var(--tm2); transition: all .2s; flex: 1; }
 .tg.active { background: var(--navy); color: #fff; }
 .cbtn { background: var(--teal); color: #fff; border: none; border-radius: 6px; padding: 11px 26px; font-size: 14px; font-weight: 700; cursor: pointer; transition: background .2s; }
 .cbtn:hover { background: var(--navy); }
@@ -199,9 +199,83 @@ tr:last-child td { border-bottom: none; }
 .result-panel.active { display: block; }
 .rp-sub { font-size: 12px; color: var(--tm2); font-weight: 400; margin-left: 6px; }
 @media(max-width:700px) { .wz-line { width: 28px; } .wz-label { font-size: 9px; } .results-nav { padding: 0 16px; } }
+/* Custom select dropdowns */
+.csel { position: relative; cursor: pointer; user-select: none; }
+.csel-trigger { border: 1.5px solid var(--gb); border-radius: 6px; padding: 9px 13px; font-size: 14px; color: var(--td); background: var(--white); display: flex; justify-content: space-between; align-items: center; transition: border .2s; white-space: nowrap; }
+.csel-trigger::after { content: '\25BE'; font-size: 10px; color: var(--tm2); margin-left: 8px; flex-shrink: 0; }
+.csel.open .csel-trigger { border-color: var(--teal); }
+.csel-list { display: none; position: absolute; top: calc(100% + 3px); left: 0; min-width: 220px; background: #fff; border: 1.5px solid var(--teal); border-radius: 8px; z-index: 200; box-shadow: 0 4px 20px rgba(0,0,0,.13); overflow: hidden; }
+.csel-list-right { left: auto; right: 0; }
+.csel.open .csel-list { display: block; }
+.csel-opt { padding: 9px 14px; font-size: 12.5px; color: var(--td); cursor: pointer; border-bottom: 1px solid #f0f2f5; }
+.csel-opt:last-child { border-bottom: none; }
+.csel-opt:hover { background: var(--tl); }
+.csel-opt.selected { background: #f0f4fa; color: var(--navy); }
+/* ESMA badges */
+.esma-badge { display: inline-block; padding: 2px 7px; border-radius: 10px; font-size: 10px; font-weight: 700; color: #fff; white-space: nowrap; }
+.esma-1 { background: #1a9e5c; }
+.esma-2 { background: #4ab566; }
+.esma-3 { background: #a0c840; color: #555; }
+.esma-4 { background: #f5c400; color: #555; }
+.esma-5 { background: #f5820a; }
+.esma-6 { background: #e03333; }
+.esma-7 { background: #900; }
+/* Fund card bottom row */
+.fund-card-bottom { display: flex; align-items: center; justify-content: space-between; margin-top: 5px; }
+/* Fund info button */
+.fund-info-btn { background: none; border: 1.5px solid var(--gb); border-radius: 50%; width: 18px; height: 18px; font-size: 10px; font-weight: 700; color: var(--tm2); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; font-family: serif; padding: 0; transition: all .15s; line-height: 1; text-transform: none; }
+.fund-info-btn:hover { border-color: var(--teal); color: var(--teal); background: var(--tl); }
+/* Fund info modal */
+.fund-modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 9999; align-items: center; justify-content: center; }
+.fund-modal-overlay.open { display: flex; }
+.fund-modal { background: #fff; border-radius: 14px; padding: 28px 32px; max-width: 420px; width: 90%; box-shadow: 0 8px 40px rgba(0,0,0,.2); position: relative; }
+.fund-modal-close { position: absolute; top: 12px; right: 14px; background: none; border: none; font-size: 18px; cursor: pointer; color: var(--tm2); line-height: 1; padding: 4px; }
+.fund-modal-close:hover { color: var(--navy); }
+.fund-modal-name { font-size: 15px; font-weight: 700; color: var(--navy); margin-bottom: 14px; padding-right: 28px; line-height: 1.3; }
+.fund-modal-esma { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+.esma-scale { display: flex; gap: 3px; }
+.esma-block { width: 20px; height: 20px; border-radius: 3px; }
+.esma-label { font-size: 12px; font-weight: 600; color: var(--tm2); }
+.fund-modal-desc { font-size: 13px; color: var(--td); line-height: 1.6; margin-bottom: 16px; }
+.fund-modal-charges { background: var(--bg); border-radius: 8px; padding: 12px 16px; }
+.fund-modal-charge-row { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 6px; }
+.fund-modal-charge-row:last-child { margin-bottom: 0; }
+.fmc-lbl { color: var(--tm2); }
+.fmc-val { font-weight: 700; color: var(--navy); }
 </style>
 </head>
 <body>
+
+<div class="fund-modal-overlay" id="fund-modal-overlay" onclick="closeFundInfo()">
+  <div class="fund-modal" onclick="event.stopPropagation()">
+    <button class="fund-modal-close" onclick="closeFundInfo()">&#x2715;</button>
+    <div class="fund-modal-name" id="modal-fund-name"></div>
+    <div class="fund-modal-esma">
+      <div class="esma-scale" id="modal-esma-scale"></div>
+      <span class="esma-label" id="modal-esma-label"></span>
+    </div>
+    <div class="fund-modal-desc" id="modal-fund-desc"></div>
+    <div class="fund-modal-charges">
+      <div class="fund-modal-charge-row">
+        <span class="fmc-lbl">Annual fund charge</span>
+        <span class="fmc-val" id="modal-charge-fund"></span>
+      </div>
+      <div class="fund-modal-charge-row" id="modal-gtee-row">
+        <span class="fmc-lbl">Guarantee charge (if selected)</span>
+        <span class="fmc-val" id="modal-charge-gtee"></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="fund-modal-overlay" id="strat-modal-overlay" onclick="closeStratInfo()">
+  <div class="fund-modal" style="max-width:500px;" onclick="event.stopPropagation()">
+    <button class="fund-modal-close" onclick="closeStratInfo()">&#x2715;</button>
+    <div class="fund-modal-name">Investment Profile</div>
+    <div id="strat-modal-body"></div>
+  </div>
+</div>
+
 <div class="hdr">
   <div class="hdr-l">
     <img src="allianz-logo.svg" height="38" alt="Allianz">
@@ -263,6 +337,10 @@ tr:last-child td { border-bottom: none; }
         <input type="date" id="inp-start" onchange="onStartChange()">
       </div>
       <div class="fg">
+        <label>Policy Number</label>
+        <input type="text" id="inp-policy-num" placeholder="e.g. PRSA123456" oninput="markDirty()">
+      </div>
+      <div class="fg">
         <label>Normal Retirement Age</label>
         <input type="number" id="inp-nra" min="60" max="75" value="65" oninput="onNraChange()">
         <span class="hint">Between 60 and 75</span>
@@ -287,26 +365,37 @@ tr:last-child td { border-bottom: none; }
 <div class="step-panel" id="step-2">
   <div class="card">
     <div class="step-hdr"><span class="step-num">2</span>Policy Details</div>
-    <div class="form-grid-3" style="grid-template-columns: 1.2fr 2fr 0.6fr;">
-      <div class="fg">
-        <label>PRSA Type</label>
-        <div class="tgg">
-          <button class="tg" id="tg-std" onclick="setPrsaType('standard')">Standard</button>
-          <button class="tg active" id="tg-nonstd" onclick="setPrsaType('nonstandard')">Non-Standard</button>
+    <div class="form-grid" style="grid-template-columns: 1fr 1.4fr;">
+      <div style="display:flex;flex-direction:column;gap:16px;">
+        <div class="fg">
+          <label>PRSA Type</label>
+          <div class="tgg">
+            <button class="tg" id="tg-std" onclick="setPrsaType('standard')">Standard</button>
+            <button class="tg active" id="tg-nonstd" onclick="setPrsaType('nonstandard')">Non-Standard</button>
+          </div>
+          <span class="hint" id="hint-type">Non-Standard: ULNG + GMAB guarantee option available</span>
         </div>
-        <span class="hint" id="hint-type">Non-Standard: ULNG + GMAB guarantee option available</span>
+        <div class="fg">
+          <label>AVC PRSA?</label>
+          <div class="tgg">
+            <button class="tg active" id="tg-avc-no" onclick="setAvc(false)">No</button>
+            <button class="tg" id="tg-avc-yes" onclick="setAvc(true)">Yes</button>
+          </div>
+        </div>
       </div>
       <div class="fg">
         <label>Product Code</label>
-        <select id="inp-code" onchange="onCodeChange()"></select>
-        <span class="hint" id="hint-code"></span>
-      </div>
-      <div class="fg">
-        <label>AVC PRSA?</label>
-        <div class="tgg">
-          <button class="tg active" id="tg-avc-no" onclick="setAvc(false)">No</button>
-          <button class="tg" id="tg-avc-yes" onclick="setAvc(true)">Yes</button>
+        <div style="display:flex;gap:8px;">
+          <div class="csel" id="csel-series" style="width:130px;flex-shrink:0;" onclick="toggleCsel(event,'csel-series')">
+            <div class="csel-trigger"><span id="csel-series-val"></span></div>
+            <div class="csel-list"></div>
+          </div>
+          <div class="csel" id="csel-num" style="width:66px;flex-shrink:0;" onclick="toggleCsel(event,'csel-num')">
+            <div class="csel-trigger"><span id="csel-num-val"></span></div>
+            <div class="csel-list csel-list-right"></div>
+          </div>
         </div>
+        <span class="hint" id="hint-code"></span>
       </div>
     </div>
   </div>
@@ -386,10 +475,11 @@ tr:last-child td { border-bottom: none; }
       </div>
     </div>
   </div>
+  <div class="step-err" id="step-3-err"></div>
   <div class="err-box" id="err-box"></div>
   <div class="step-nav">
     <button class="nav-back" onclick="prevStep()">&larr; &nbsp;Back</button>
-    <button class="nav-next" onclick="runIllustration()" style="background:var(--navy);">Generate Illustration &nbsp;&rarr;</button>
+    <button class="nav-next" onclick="validateAndGenerate()" style="background:var(--navy);">Generate Illustration &nbsp;&rarr;</button>
   </div>
 </div>
 
@@ -580,8 +670,22 @@ function prevStep() {
 function validateStep(step) {
   var errs = [];
   if (step === 1) {
-    if (!document.getElementById('inp-dob').value) errs.push('Date of birth is required.');
-    if (!document.getElementById('inp-start').value) errs.push('Policy start date is required.');
+    if (!document.getElementById('inp-name').value.trim()) errs.push('Customer name is required.');
+    if (!document.getElementById('inp-policy-num').value.trim()) errs.push('Policy number is required.');
+    var dobVal   = document.getElementById('inp-dob').value;
+    var startVal = document.getElementById('inp-start').value;
+    if (!dobVal) errs.push('Date of birth is required.');
+    if (!startVal) errs.push('Policy start date is required.');
+    if (dobVal && startVal) {
+      var dob   = new Date(dobVal);
+      var start = new Date(startVal);
+      if (dob >= start) errs.push('Date of birth must be before the policy start date.');
+      else {
+        var ageAtStart = (start - dob) / (365.25 * 24 * 3600 * 1000);
+        var nra = parseInt(document.getElementById('inp-nra').value, 10);
+        if (!isNaN(nra) && ageAtStart >= nra) errs.push('Policy start age must be less than the normal retirement age — there must be a positive term.');
+      }
+    }
     var nra = parseInt(document.getElementById('inp-nra').value, 10);
     if (isNaN(nra) || nra < 60 || nra > 75) errs.push('Retirement age must be between 60 and 75.');
   }
@@ -590,6 +694,17 @@ function validateStep(step) {
     var ofv = parseNum(document.getElementById('inp-ofv').value);
     var rp = parseNum(document.getElementById('inp-rp').value);
     if (sp === 0 && ofv === 0 && rp === 0) errs.push('Please enter at least one of: Single Premium, Opening Fund Value, or Regular Premium.');
+  }
+  if (step === 3) {
+    if (state.strat === 'diy') {
+      var ids = state.prsaType === 'standard' ? STD_FUND_IDS : NONSTD_FUND_IDS;
+      var hasSelected = ids.some(function(id){ return state.diySelected[id]; });
+      if (!hasSelected) errs.push('Please select at least one fund.');
+      else {
+        var total = ids.reduce(function(s,id){ return s + (state.diyAllocs[id] || 0); }, 0);
+        if (Math.abs(total - 100) > 0.5) errs.push('Fund allocations must total 100% (currently ' + (Math.round(total * 10) / 10) + '%).');
+      }
+    }
   }
   return errs;
 }
@@ -664,28 +779,104 @@ function setPrsaType(t) {
   markDirty();
 }
 
+function getCodeSeries() { return state.code ? state.code.charAt(0) : ''; }
+function getCodeNum()    { return state.code ? state.code.slice(1) : ''; }
+
 function rebuildCodeOptions() {
-  var sel = document.getElementById('inp-code');
-  sel.innerHTML = '';
-  var codes = Object.keys(CODES).filter(function(c){ return CODES[c].type === state.prsaType; });
-  codes.forEach(function(c) {
-    var opt = document.createElement('option');
-    opt.value = c;
-    var cc = CODES[c];
-    opt.textContent = c + ' — Admin ' + pct(cc.admin) + ', Ongoing ' + pct(cc.ongoing) + (cc.spUp > 0 ? ', SP Upfront ' + pct(cc.spUp) : '');
-    sel.appendChild(opt);
+  // Determine available series for current prsaType
+  var allCodes = Object.keys(CODES).filter(function(c){ return CODES[c].type === state.prsaType; });
+  var seriesSet = [];
+  allCodes.forEach(function(c){
+    var s = c.charAt(0);
+    if (seriesSet.indexOf(s) < 0) seriesSet.push(s);
   });
-  if (codes.indexOf(state.code) < 0) state.code = codes[0];
-  sel.value = state.code;
+  seriesSet.sort();
+
+  // Ensure current code is valid; if not, pick first available
+  if (allCodes.indexOf(state.code) < 0) state.code = allCodes[0];
+  var curSeries = getCodeSeries();
+  var curNum    = getCodeNum();
+
+  var seriesDescs = { A:'Higher AMC, lower ongoing', B:'Mid AMC', C:'Lower AMC', D:'No commission', E:'Standard PRSA', F:'Highest AMC, full ongoing' };
+
+  // Series custom dropdown
+  document.getElementById('csel-series-val').textContent = curSeries;
+  var seriesList = document.getElementById('csel-series').querySelector('.csel-list');
+  seriesList.innerHTML = '';
+  seriesSet.forEach(function(s) {
+    var item = document.createElement('div');
+    item.className = 'csel-opt' + (s === curSeries ? ' selected' : '');
+    item.innerHTML = '<b>' + s + '</b> &mdash; ' + (seriesDescs[s] || '');
+    item.onclick = function(e) {
+      e.stopPropagation();
+      document.getElementById('csel-series').classList.remove('open');
+      setCodeSeries(s);
+    };
+    seriesList.appendChild(item);
+  });
+
+  // Level custom dropdown
+  var numsForSeries = allCodes
+    .filter(function(c){ return c.charAt(0) === curSeries; })
+    .map(function(c){ return c.slice(1); });
+  document.getElementById('csel-num-val').textContent = curNum;
+  var numList = document.getElementById('csel-num').querySelector('.csel-list');
+  numList.innerHTML = '';
+  numsForSeries.forEach(function(n) {
+    var cc = CODES[curSeries + n];
+    var parts = [];
+    if (cc.spUp > 0) parts.push((cc.spUp * 100).toFixed(0) + '% SP upfront');
+    else parts.push('No upfront');
+    if (cc.ongoing > 0) parts.push((cc.ongoing * 100).toFixed(2) + '% ongoing p.a.');
+    else parts.push('No ongoing');
+    var item = document.createElement('div');
+    item.className = 'csel-opt' + (n === curNum ? ' selected' : '');
+    item.innerHTML = '<b>' + n + '</b> &mdash; ' + parts.join(' &nbsp;|&nbsp; ');
+    item.onclick = function(e) {
+      e.stopPropagation();
+      document.getElementById('csel-num').classList.remove('open');
+      setCodeNum(n);
+    };
+    numList.appendChild(item);
+  });
+
   onCodeChange();
 }
 
+function toggleCsel(e, id) {
+  e.stopPropagation();
+  var el = document.getElementById(id);
+  var wasOpen = el.classList.contains('open');
+  document.querySelectorAll('.csel.open').forEach(function(x){ x.classList.remove('open'); });
+  if (!wasOpen) el.classList.add('open');
+}
+
+document.addEventListener('click', function() {
+  document.querySelectorAll('.csel.open').forEach(function(x){ x.classList.remove('open'); });
+});
+
+function setCodeSeries(s) {
+  var allCodes = Object.keys(CODES).filter(function(c){ return CODES[c].type === state.prsaType; });
+  var numsForSeries = allCodes.filter(function(c){ return c.charAt(0) === s; }).map(function(c){ return c.slice(1); });
+  var curNum = getCodeNum();
+  var newNum = numsForSeries.indexOf(curNum) >= 0 ? curNum : numsForSeries[0];
+  state.code = s + newNum;
+  rebuildCodeOptions();
+  markDirty();
+}
+
+function setCodeNum(n) {
+  state.code = getCodeSeries() + n;
+  rebuildCodeOptions();
+  markDirty();
+}
+
 function onCodeChange() {
-  state.code = document.getElementById('inp-code').value;
   var cc = CODES[state.code];
+  if (!cc) return;
   var hint = 'Admin: ' + pct(cc.admin) + ' p.a.';
-  if (cc.ongoing > 0) hint += ' | Ongoing commission: ' + pct(cc.ongoing) + ' p.a.';
-  if (cc.spUp > 0) hint += ' | SP upfront commission: ' + pct(cc.spUp);
+  if (cc.ongoing > 0) hint += ' | Ongoing: ' + pct(cc.ongoing) + ' p.a.';
+  if (cc.spUp > 0) hint += ' | SP upfront: ' + pct(cc.spUp);
   if (cc.rpPct > 0) hint += ' | RP upfront: ' + pct(cc.rpPct) + ' × term (max ' + pct(cc.rpMax) + ')';
   document.getElementById('hint-code').textContent = hint;
   markDirty();
@@ -752,7 +943,15 @@ function rebuildStratOptions() {
     riskWrap.className = 'risk-row-wrap';
     var lbl = document.createElement('div');
     lbl.className = 'risk-row-label';
-    lbl.textContent = 'Risk Level';
+    lbl.style.cssText = 'display:flex;align-items:center;gap:7px;';
+    var lblText = document.createElement('span');
+    lblText.textContent = 'Investment Profile';
+    var lblBtn = document.createElement('button');
+    lblBtn.className = 'fund-info-btn';
+    lblBtn.textContent = 'i';
+    lblBtn.onclick = showStratInfo;
+    lbl.appendChild(lblText);
+    lbl.appendChild(lblBtn);
     riskWrap.appendChild(lbl);
     var riskBtnRow = document.createElement('div');
     riskBtnRow.className = 'risk-btn-row';
@@ -822,9 +1021,12 @@ function rebuildFundCards() {
     card.className = 'fund-card' + (state.diySelected[id] ? ' selected' : '');
     card.innerHTML =
       '<div class="fund-card-check">&#10003;</div>' +
-      '<div class="fund-card-dot" style="background:' + f.color + ';"></div>' +
       '<div class="fund-card-name">' + f.name + '</div>' +
-      '<div class="fund-card-rate">' + pct(f.gross) + ' gross</div>';
+      '<div class="fund-card-bottom">' +
+        '<span class="esma-badge esma-' + f.esma + '">SRI ' + f.esma + '</span>' +
+        (f.gmab ? '<span style="font-size:12px;margin-left:2px;line-height:1">&#x1F512;</span>' : '') +
+        '<button class="fund-info-btn" onclick="event.stopPropagation();showFundInfo(\'' + f.id + '\')">i</button>' +
+      '</div>';
     card.addEventListener('click', (function(fid) {
       return function() { toggleFundCard(fid); };
     })(id));
@@ -878,7 +1080,8 @@ function rebuildFundRows() {
     row.innerHTML =
       '<div class="fund-dot" style="background:' + f.color + ';"></div>' +
       '<div class="fund-name">' + f.name + '</div>' +
-      '<div class="fund-rate">' + pct(f.gross) + ' gross</div>' +
+      '<span class="esma-badge esma-' + f.esma + '">SRI ' + f.esma + '</span>' +
+      '<button class="fund-info-btn" onclick="showFundInfo(\'' + f.id + '\')">i</button>' +
       '<input type="number" class="fund-inp" min="0" max="100" step="0.1" data-id="' + id + '" value="' + (state.diyAllocs[id] || 0) + '">' +
       '<span class="fund-pct">%</span>' +
       gmabHtml;
@@ -977,10 +1180,23 @@ function onRpChange() {
   markDirty();
 }
 
+function validateAndGenerate() {
+  var errs = validateStep(3);
+  var errEl = document.getElementById('step-3-err');
+  if (errs.length > 0) {
+    errEl.textContent = errs.join(' ');
+    errEl.style.display = 'block';
+    return;
+  }
+  errEl.style.display = 'none';
+  runIllustration();
+}
+
 // ─── CALCULATION ENGINE ─────────────────────────────────────────────────────
 function runIllustration() {
   // --- Gather inputs ---
   var name   = document.getElementById('inp-name').value.trim() || 'Client';
+  var policyNum = document.getElementById('inp-policy-num').value.trim();
   var dobStr = document.getElementById('inp-dob').value;
   var startStr = document.getElementById('inp-start').value;
   var nra    = parseInt(document.getElementById('inp-nra').value, 10);
@@ -1191,7 +1407,7 @@ function runIllustration() {
 
   // --- Store result ---
   illResult = {
-    name, code: state.code, prsaType: state.prsaType,
+    name, policyNum, code: state.code, prsaType: state.prsaType,
     strat: state.strat, stratLabel: getStratLabel(), stratSub: getStratSub(),
     nra, termMonths, termYears,
     grossRate: blendedGross, netRate: netAnnualReturn, totalCharge: totalAnnualCharge,
@@ -1580,7 +1796,7 @@ function generateDocument() {
         '<div class="shdr">1.&nbsp; Personal and general policyholder details</div>' +
         '<table class="dtbl">' +
           '<tr><td class="dkey">Policyholder</td><td class="dval">' + clientName + '</td></tr>' +
-          '<tr><td class="dkey">Policy number</td><td class="dval">&ndash;</td></tr>' +
+          '<tr><td class="dkey">Policy number</td><td class="dval">' + (r.policyNum || '&ndash;') + '</td></tr>' +
           '<tr><td class="dkey">Date of birth</td><td class="dval">' + dobFmt + '</td></tr>' +
           '<tr><td class="dkey">Gender</td><td class="dval">' + genderStr + '</td></tr>' +
           '<tr><td class="dkey">Plan</td><td class="dval">' + planName + '</td></tr>' +
@@ -1766,6 +1982,79 @@ function pct(v) {
 function parseNum(s) {
   if (!s) return 0;
   return parseFloat(String(s).replace(/[€,\s]/g, '')) || 0;
+}
+
+// ─── Fund info modal ─────────────────────────────────────────────────────────
+var ESMA_COLORS = ['','#1a9e5c','#4ab566','#a0c840','#f5c400','#f5820a','#e03333','#900'];
+var ESMA_LABELS = ['','Very Low','Low','Low to Medium','Medium','Medium to High','High','Very High'];
+
+function showFundInfo(id) {
+  var f = FUNDS.find(function(x){ return x.id === id; });
+  if (!f) return;
+  document.getElementById('modal-fund-name').textContent = f.name;
+  var scale = document.getElementById('modal-esma-scale');
+  scale.innerHTML = '';
+  for (var i = 1; i <= 7; i++) {
+    var blk = document.createElement('div');
+    blk.className = 'esma-block';
+    blk.style.background = i <= f.esma ? ESMA_COLORS[i] : '#ddd';
+    blk.style.opacity = i === f.esma ? '1' : (i < f.esma ? '0.55' : '0.2');
+    scale.appendChild(blk);
+  }
+  document.getElementById('modal-esma-label').textContent = 'SRI ' + f.esma + ' — ' + ESMA_LABELS[f.esma];
+  document.getElementById('modal-fund-desc').textContent = f.desc || '';
+  document.getElementById('modal-charge-fund').textContent = (f.charge * 100).toFixed(2) + '% p.a.';
+  var gteeRow = document.getElementById('modal-gtee-row');
+  if (f.gmab > 0) {
+    document.getElementById('modal-charge-gtee').textContent = (f.gmab * 100).toFixed(2) + '% p.a.';
+    gteeRow.style.display = '';
+  } else {
+    gteeRow.style.display = 'none';
+  }
+  document.getElementById('fund-modal-overlay').classList.add('open');
+}
+
+function closeFundInfo() {
+  document.getElementById('fund-modal-overlay').classList.remove('open');
+}
+
+function showStratInfo() {
+  var profiles = [
+    {
+      label: 'Balanced',
+      color: '#1a9e5c',
+      desc: 'A more cautious blend weighted towards lower-volatility assets and bonds, with a smaller equity allocation. Prioritises capital preservation with modest growth potential.',
+      suitable: 'Investors with a shorter time horizon, lower appetite for short-term volatility, or those approaching retirement who want to protect accumulated savings.'
+    },
+    {
+      label: 'Dynamic',
+      color: '#00A0B4',
+      desc: 'A medium-risk mix balancing equities and bonds in roughly equal measure. Targets solid long-term growth while maintaining meaningful downside protection.',
+      suitable: 'Investors with a medium-term horizon and a moderate risk appetite. The most widely selected profile, suited to the typical pension saver.'
+    },
+    {
+      label: 'Opportunity',
+      color: '#003781',
+      desc: 'A higher equity weighting aiming for maximum long-term capital growth. Accepts greater short-term volatility in exchange for stronger return potential over a longer investment period.',
+      suitable: 'Investors with a longer time horizon (10+ years) and higher risk tolerance who can look past short-term market fluctuations.'
+    }
+  ];
+  var body = document.getElementById('strat-modal-body');
+  body.innerHTML = '';
+  profiles.forEach(function(p) {
+    var card = document.createElement('div');
+    card.style.cssText = 'margin-bottom:12px;padding:13px 16px;background:#f8fafd;border-radius:8px;border-left:3px solid ' + p.color + ';';
+    card.innerHTML =
+      '<div style="font-size:13px;font-weight:700;color:var(--navy);margin-bottom:5px;">' + p.label + '</div>' +
+      '<div style="font-size:12px;color:var(--td);line-height:1.55;margin-bottom:7px;">' + p.desc + '</div>' +
+      '<div style="font-size:11.5px;color:var(--tm2);line-height:1.45;"><span style="font-weight:700;color:var(--navy);">Suitable for:</span> ' + p.suitable + '</div>';
+    body.appendChild(card);
+  });
+  document.getElementById('strat-modal-overlay').classList.add('open');
+}
+
+function closeStratInfo() {
+  document.getElementById('strat-modal-overlay').classList.remove('open');
 }
 </script>
 

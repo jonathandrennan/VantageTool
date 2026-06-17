@@ -3,26 +3,26 @@
 
 // ─── FUNDS ──────────────────────────────────────────────────────────────────
 var FUNDS = [
-  { id:'ss30', name:'Allianz Strategy Select 30', gross:0.05135, charge:0.0025, gmab:0.0065, color:'#003781', type:'ulng' },
-  { id:'ss50', name:'Allianz Strategy Select 50', gross:0.05725, charge:0.0025, gmab:0.0075, color:'#00A0B4', type:'ulng' },
-  { id:'ss75', name:'Allianz Strategy Select 75', gross:0.064625, charge:0.0025, gmab:0.0085, color:'#0064B4', type:'ulng' },
-  { id:'afisd', name:'Allianz Adv. Fixed Income Sh. Duration', gross:0.0425, charge:0.0024, gmab:0, color:'#1a9e5c', type:'ulng' },
-  { id:'afie', name:'Allianz Adv. Fixed Income Euro', gross:0.0425, charge:0.0028, gmab:0, color:'#2da86a', type:'ulng' },
-  { id:'cash', name:'Allianz Euro Cash', gross:0.032, charge:0.0018, gmab:0, color:'#D97706', type:'ulng' },
-  { id:'etfe', name:'HSBC Euro Stoxx 50 UCITS ETF', gross:0.072, charge:0.0005, gmab:0, color:'#F5A623', type:'ulng' },
-  { id:'etfw', name:'HSBC MSCI World UCITS ETF', gross:0.072, charge:0.0015, gmab:0, color:'#e03e3e', type:'ulng' },
-  { id:'etfs', name:'HSBC S&P 500 UCITS ETF', gross:0.072, charge:0.0009, gmab:0, color:'#e06030', type:'ulng' },
-  { id:'bsri', name:'Allianz Best Styles Global Equity SRI', gross:0.072, charge:0.005, gmab:0, color:'#10B981', type:'ulng' },
-  { id:'dm75', name:'Allianz DMAS SRI 75', gross:0.064625, charge:0.0072, gmab:0, color:'#6366F1', type:'ulng' },
-  { id:'dm50', name:'Allianz DMAS SRI 50', gross:0.05725, charge:0.0067, gmab:0, color:'#8B5CF6', type:'ulng' },
-  { id:'dm15', name:'Allianz DMAS SRI 15', gross:0.046925, charge:0.0059  , gmab:0, color:'#A78BFA', type:'ulng' },
+  { id:'cash',  name:'Allianz Euro Cash',                          gross:0.032,    charge:0.0018, gmab:0,      color:'#D97706', type:'ulng', esma:1, desc:'A capital-preservation fund investing in short-term euro money market instruments. Aims to preserve capital and provide returns in line with prevailing short-term interest rates.' },
+  { id:'afisd', name:'Allianz Adv. Fixed Income Sh. Duration',     gross:0.0425,   charge:0.0024, gmab:0,      color:'#1a9e5c', type:'ulng', esma:2, desc:'A fixed income fund investing in short-duration euro bonds and money market instruments. Focuses on capital preservation with a modest income return.' },
+  { id:'afie',  name:'Allianz Adv. Fixed Income Euro',             gross:0.0425,   charge:0.0028, gmab:0,      color:'#2da86a', type:'ulng', esma:2, desc:'A bond fund investing primarily in euro-denominated investment-grade fixed income securities across a range of maturities.' },
+  { id:'ss30',  name:'Allianz Strategy Select 30',                 gross:0.05135,  charge:0.0025, gmab:0.0065, color:'#003781', type:'ulng', esma:3, desc:'A multi-asset fund investing approximately 30% in global equities and 70% in bonds and cash. Designed to provide moderate capital growth with lower volatility. Optional rolling guarantee available.' },
+  { id:'dm15',  name:'Allianz DMAS SRI 15',                        gross:0.046925, charge:0.0059, gmab:0,      color:'#A78BFA', type:'ulng', esma:3, desc:'A defensively positioned dynamic multi-asset fund with up to 15% in equities, actively managed with an SRI screen. Emphasises capital preservation.' },
+  { id:'ss50',  name:'Allianz Strategy Select 50',                 gross:0.05725,  charge:0.0025, gmab:0.0075, color:'#00A0B4', type:'ulng', esma:4, desc:'A balanced multi-asset fund with approximately equal allocations to global equities and fixed income. Aims to deliver medium-term capital growth. Optional rolling guarantee available.' },
+  { id:'ss75',  name:'Allianz Strategy Select 75',                 gross:0.064625, charge:0.0025, gmab:0.0085, color:'#0064B4', type:'ulng', esma:4, desc:'A growth-oriented multi-asset fund with approximately 75% invested in global equities. Suitable for investors with a medium to long-term investment horizon. Optional rolling guarantee available.' },
+  { id:'dm50',  name:'Allianz DMAS SRI 50',                        gross:0.05725,  charge:0.0067, gmab:0,      color:'#8B5CF6', type:'ulng', esma:4, desc:'A dynamic multi-asset fund with up to 50% in equities, actively managed with an SRI screen. Balances growth potential against downside risk.' },
+  { id:'dm75',  name:'Allianz DMAS SRI 75',                        gross:0.064625, charge:0.0072, gmab:0,      color:'#6366F1', type:'ulng', esma:5, desc:'A growth-focused dynamic multi-asset fund with up to 75% in global equities, actively managed with an SRI screen. Targets long-term capital growth.' },
+  { id:'bsri',  name:'Allianz Best Styles Global Equity SRI',      gross:0.072,    charge:0.005,  gmab:0,      color:'#10B981', type:'ulng', esma:5, desc:'An actively managed global equity fund combining multiple systematic investment styles (value, quality, momentum) with a responsible investment screen.' },
+  { id:'etfe',  name:'HSBC Euro Stoxx 50 UCITS ETF',               gross:0.072,    charge:0.0005, gmab:0,      color:'#F5A623', type:'ulng', esma:6, desc:'A passively managed ETF tracking the Euro STOXX 50 Index, comprising the 50 largest eurozone companies by free-float market capitalisation.' },
+  { id:'etfw',  name:'HSBC MSCI World UCITS ETF',                  gross:0.072,    charge:0.0015, gmab:0,      color:'#e03e3e', type:'ulng', esma:6, desc:'A passively managed ETF providing broad exposure to large and mid-cap equities across 23 developed markets globally.' },
+  { id:'etfs',  name:'HSBC S&P 500 UCITS ETF',                     gross:0.072,    charge:0.0009, gmab:0,      color:'#e06030', type:'ulng', esma:6, desc:'A passively managed ETF tracking the S&P 500 Index of the 500 largest US-listed companies.' },
 ];
 var FUNDS_MAP = {};
 FUNDS.forEach(function(f){ FUNDS_MAP[f.id] = f; });
 
 // ─── FUND AVAILABILITY ──────────────────────────────────────────────────────
-var STD_FUND_IDS    = ['ss30','ss50','ss75','afisd','afie','cash','etfe','etfw','etfs'];
-var NONSTD_FUND_IDS = ['ss30','ss50','ss75','afisd','afie','cash','etfe','etfw','etfs','bsri','dm75','dm50','dm15'];
+var STD_FUND_IDS    = ['cash','afisd','afie','ss30','ss50','ss75','etfe','etfw','etfs'];
+var NONSTD_FUND_IDS = ['cash','afisd','afie','ss30','dm15','ss50','ss75','dm50','dm75','bsri','etfe','etfw','etfs'];
 
 // ─── PRODUCT CODES ───────────────────────────────────────────────────────────
 var CODES = {
