@@ -33,7 +33,7 @@ var CODES = {
   'A5': { type:'nonstandard', admin:0.0115, ongoing:0.0025, spUp:0.04, rpPct:0.013, rpMax:0.2 },
   'B1': { type:'nonstandard', admin:0.009, ongoing:0.005, spUp:0, rpPct:0, rpMax:0 },
   'B2': { type:'nonstandard', admin:0.009, ongoing:0.0035, spUp:0.01, rpPct:0.004, rpMax:0.05 },
-  'B3': { type:'nonstandard', admin:0.009, ongoing:0.0025, spUp:0.02, rpPct:0.008, rpMax:0.1 },
+  'B3': { type:'nonstandard', admin:0.009, ongoing:0.0025, spUp:0.035, rpPct:0.008, rpMax:0.1 },
   'B4': { type:'nonstandard', admin:0.009, ongoing:0.001, spUp:0.03, rpPct:0.01, rpMax:0.15 },
   'B5': { type:'nonstandard', admin:0.009, ongoing:0, spUp:0.04, rpPct:0.013, rpMax:0.2 },
   'C1': { type:'nonstandard', admin:0.0065, ongoing:0.0025, spUp:0.035, rpPct:0, rpMax:0 },
