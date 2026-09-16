@@ -1193,6 +1193,45 @@ function validateAndGenerate() {
 }
 
 // ─── CALCULATION ENGINE ─────────────────────────────────────────────────────
+// Projects the same nominal (gross) contribution schedule at a flat annual rate over
+// termMonths equal monthly periods (an ordinary IRR-style equal-period cashflow model —
+// matches Excel's IRR() over the monthly SRP schedule, SRP!BC86). Deliberately does NOT
+// apply the engine's FMF scaling to the final month: the actual projection shrinks that
+// last month (a true partial period), so reproducing its value with N *equal* periods
+// requires a slightly lower periodic rate — that gap is exactly why the disclosed IRR
+// (~5.97%) comes out below the nominal capped fund rate (6.00%) when the term includes
+// a part-month.
+function projectAtFlatRate(annualRate, ofv, sp, rpMonthly, freq, esc, termMonths) {
+  var g = Math.pow(1 + annualRate, 1/12) - 1;
+  var fv = ofv + sp;
+  var escFactor = 1;
+  for (var m = 1; m <= termMonths; m++) {
+    if (m > 1 && (m - 1) % 12 === 0) {
+      if (esc > 0) escFactor *= (1 + esc / 100);
+    }
+    var rpGross = 0;
+    if (rpMonthly > 0) {
+      var due = false;
+      if (freq === 'monthly')   due = true;
+      if (freq === 'quarterly') due = (m % 3 === 1);
+      if (freq === 'annual')    due = (m % 12 === 1);
+      if (due) rpGross = rpMonthly * escFactor;
+    }
+    fv = (fv + rpGross) * (1 + g);
+  }
+  return fv;
+}
+// Solves (by bisection) the flat annual IRR that reproduces targetFV from the same
+// contribution schedule over termMonths equal periods.
+function solveIrr(targetFV, ofv, sp, rpMonthly, freq, esc, termMonths) {
+  var lo = -0.5, hi = 0.5;
+  for (var i = 0; i < 50; i++) {
+    var mid = (lo + hi) / 2;
+    if (projectAtFlatRate(mid, ofv, sp, rpMonthly, freq, esc, termMonths) < targetFV) lo = mid; else hi = mid;
+  }
+  return (lo + hi) / 2;
+}
+
 function runIllustration() {
   // --- Gather inputs ---
   var name   = document.getElementById('inp-name').value.trim() || 'Client';
@@ -1400,17 +1439,29 @@ function runIllustration() {
     }
   }
 
-  // --- Annuity calculation (simplified) ---
+  // --- Annuity calculation ---
   var annFactor  = getAnnuityFactor(nra, state.gender, ANN_INTEREST, ANN_ESC, ANN_GUARANTEE);
-  var realMat    = fundWC / Math.pow(1 + INFLATION, termYears);
-  var monthlyAnn = realMat / (annFactor * 12);
+  // Continuous age-based term (NOT termYears, which rounds up to whole months for the
+  // projection loop) — matches SRP!D75/C42's (SRP_NRA - SRP_Current_Age) exponent.
+  var termYearsExact = nra - ageAtStart;
+  var realMat    = fundWC / Math.pow(1 + INFLATION, termYearsExact);
+  var mortImproveRate   = state.gender === 'F' ? ANN_MORT_IMPROVE_F : ANN_MORT_IMPROVE_M;
+  var mortImproveFactor = Math.pow(1 + mortImproveRate, (start.getFullYear() - ANN_MORT_BASE_YEAR) + termYearsExact);
+  var monthlyAnn = realMat / (annFactor * mortImproveFactor * 12);
+
+  // --- IRR-based investment return (matches Excel SRP!BC86 methodology) ---
+  // The disclosed "before retirement" return is the flat annualised rate that reproduces
+  // the actual projected fund value from the same contribution schedule — not the raw
+  // nominal fund/glidepath rate — since the FMF-scaled final month means the two differ.
+  var grossIRR = solveIrr(fundNC, ofvRaw, spRaw, rpMonthly, state.freq, state.esc, termMonths);
+  var netIRR   = solveIrr(fundWC, ofvRaw, spRaw, rpMonthly, state.freq, state.esc, termMonths);
 
   // --- Store result ---
   illResult = {
     name, policyNum, code: state.code, prsaType: state.prsaType,
     strat: state.strat, stratLabel: getStratLabel(), stratSub: getStratSub(),
     nra, termMonths, termYears,
-    grossRate: blendedGross, netRate: netAnnualReturn, totalCharge: totalAnnualCharge,
+    grossRate: grossIRR, netRate: netIRR, totalCharge: grossIRR - netIRR,
     blendedFundCharge: blendedFundCharge,
     fundNC, fundWC, realMat, monthlyAnn,
     snapshots,
@@ -1450,14 +1501,15 @@ function getStratSub() {
 // Returns PV of €1/yr income paid monthly, escalating at escRate p.a.,
 // discounted at intRate p.a., with guaranteeYrs certain (ILT15 mortality).
 function getAnnuityFactor(retAge, gender, intRate, escRate, guaranteeYrs) {
-  var qx = gender === 'F' ? ILT15_QX_F : ILT15_QX_M;
+  var qx    = gender === 'F' ? ILT15_QX_F : ILT15_QX_M;
+  var qxAdj = gender === 'F' ? ANN_QX_ADJ_F : ANN_QX_ADJ_M;
   var factor = 0;
   var px = 1;           // survival probability at start of current month
   var escMonth = 1/12;  // current monthly escalation amount (starts at 1/12)
   var age = retAge;
   var gteeMths = guaranteeYrs * 12;
-  for (var t = 1; t <= 660; t++) {   // 660 months = 55 years, matching Excel table
-    var qxA = qx[age] || 0;
+  for (var t = 1; t <= 661; t++) {   // 661 months (rows 697-1357), matching Excel table
+    var qxA = (qx[age] || 0) * qxAdj;
     var qxM = 1 - Math.pow(1 - qxA, 1/12);
     var amount = (t <= gteeMths) ? escMonth : escMonth * px;
     factor += amount * Math.pow(1 + intRate, -t / 12);
@@ -1554,7 +1606,7 @@ function renderIllustration() {
     'Projected values are based on a gross annual investment return of ' + (r.isGlidepath ? 'up to ' + pct(r.grossRate) + ' (varying per glidepath)' : pct(r.grossRate)) + ' and an inflation rate of 3.00% per annum. ' +
     'Projected values are not guaranteed and actual values may be higher or lower. ' +
     'The projected value shown "if no account is taken of applicable charges" shows what the fund value would be if no charges were applied to the PRSA. ' +
-    'Charges include an annual management charge of ' + pct(r.cc.admin) + ', a fund management charge of ' + pct(r.totalCharge - r.cc.admin - r.cc.ongoing - r.blendedGmab) + (r.blendedGmab > 0 ? ', and a GMAB guarantee charge of ' + pct(r.blendedGmab) : '') + '. ' +
+    'Charges include an annual management charge of ' + pct(r.cc.admin) + ', a fund management charge of ' + pct(r.blendedFundCharge) + (r.blendedGmab > 0 ? ', and a GMAB guarantee charge of ' + pct(r.blendedGmab) : '') + '. ' +
     'The estimated monthly annuity is shown in current prices (discounted at 3% p.a. inflation) and is an illustrative estimate only. ' +
     'Allianz Global Life dac is regulated by the Central Bank of Ireland.';
   document.getElementById('ill-disc').textContent = disc;
@@ -1641,17 +1693,16 @@ function generateDocument() {
     }
   }
 
-  // Charge breakdown (admin + FMC ± GMAB; excludes ongoing commission)
-  var fundBaseExclGmab = r.cc.admin + r.blendedFundCharge;
-  var fundBaseInclGmab = fundBaseExclGmab + r.blendedGmab;
-  var riy              = fundBaseInclGmab;
+  // Effect of charges (reduction in yield): gross IRR minus net IRR, both already
+  // computed in runIllustration via solveIrr() to match the Excel SRP methodology.
+  var riy = Math.max(0, r.grossRate - r.netRate);
 
-  // Snapshots filtered to years 1-5 + maturity only (regulatory requirement)
+  // Snapshots filtered to years 1-5 + yr 10 (if term > 10 years) + maturity only (regulatory requirement)
   var docSnaps = [];
   var seen = {};
   r.snapshots.forEach(function(snap) {
     if (snap.isMat) { docSnaps.push(snap); return; }
-    if ([1,2,3,4,5].indexOf(snap.year) >= 0 && !seen[snap.year]) {
+    if ([1,2,3,4,5,10].indexOf(snap.year) >= 0 && !seen[snap.year]) {
       docSnaps.push(snap); seen[snap.year] = true;
     }
   });
@@ -1701,8 +1752,11 @@ function generateDocument() {
   var fundRows = '';
   activeFunds.forEach(function(af) {
     var f       = af.fund;
-    var fBase   = r.cc.admin + f.charge;
-    var fGmab   = (r.gmab && f.gmab > 0) ? f.gmab : 0;
+    // Quoted document charge uses the regular (non-upper-bound) fund charge — the
+    // projection itself keeps using f.charge (upper bound) to avoid re-running it.
+    var fBase   = r.cc.admin + f.chargeQuoted;
+    var fundGmabSelected = r.strat === 'diy' ? !!state.diyGmab[f.id] : r.gmab;
+    var fGmab   = (fundGmabSelected && f.gmab > 0) ? f.gmab : 0;
     var fTotal  = fBase + fGmab;
     var lbl     = f.name + (af.alloc < 100 ? ' (' + af.alloc + '%)' : '');
     fundRows += showGmabCol
@@ -1800,7 +1854,9 @@ function generateDocument() {
           '<tr><td class="dkey">Date of birth</td><td class="dval">' + dobFmt + '</td></tr>' +
           '<tr><td class="dkey">Gender</td><td class="dval">' + genderStr + '</td></tr>' +
           '<tr><td class="dkey">Plan</td><td class="dval">' + planName + '</td></tr>' +
-          '<tr><td class="dkey">Investment Strategy</td><td class="dval">' + r.stratLabel + (r.stratSub ? ' &ndash; ' + r.stratSub : '') + '</td></tr>' +
+          '<tr><td class="dkey">Investment Strategy</td><td class="dval">' + (r.strat === 'diy'
+            ? activeFunds.map(function(af){ return af.fund.name + ' (' + af.alloc + '%)'; }).join(', ')
+            : r.stratLabel + (r.stratSub ? ' &ndash; ' + r.stratSub : '')) + '</td></tr>' +
           '<tr><td class="dkey">Name of PRSA provider</td><td class="dval">Allianz Global Life dac</td></tr>' +
           '<tr><td class="dkey">Policy start date</td><td class="dval">' + startFmt + '</td></tr>' +
           '<tr><td class="dkey">Chosen retirement age of policyholder</td><td class="dval">' + r.nra + '</td></tr>' +
@@ -1879,8 +1935,13 @@ function generateDocument() {
           '</div>' +
         '</div>' +
         '<p><strong>Fund-based charges</strong></p>' +
-        '<p>An Annual Management Charge (AMC) of ' + fp(r.cc.admin) + ' and a Fund Management Charge (FMC), which varies by fund, are applied to your PRSA. In addition, a Sales Remuneration charge of ' + fp(r.cc.ongoing) + ' per annum applies.</p>' +
+        '<p>An Annual Management Charge (AMC) of ' + fp(r.cc.admin) + ' and a Fund Management Charge (FMC), which varies by fund, are applied to your PRSA. In addition, where applicable, a guarantee charge will apply.</p>' +
         '<p>The charges are deducted on a monthly basis either directly from your PRSA or indirectly from the funds in which your PRSA invests.</p>' +
+        (activeFunds.length > 0
+          ? '<p>You have chosen to invest in the following fund' + (activeFunds.length > 1 ? 's' : '') + ': ' + activeFunds.map(function(af){ return af.fund.name; }).join(', ') + '.' +
+            (showGmabCol ? ' You have also chosen to include the guarantee on some of these funds where available. As a result, while invested in this investment strategy (and thereafter if you choose to remain within those funds post-retirement) the guarantee and guarantee charge will apply.' : '') +
+            '</p>'
+          : '') +
       '</div>' +
     '</div>' +
     footer(4) + '</div>';
@@ -1890,10 +1951,7 @@ function generateDocument() {
     '<div class="pgbody">' +
       '<div class="meta">' + dateFmt + '</div>' +
       '<div class="content">' +
-        (activeFunds.length > 0
-          ? '<p>You have chosen to invest in the following fund' + (activeFunds.length > 1 ? 's' : '') + '. The total fund based charge applicable for each fund is set out below. The total charge includes the Annual Management Charge of ' + fp(r.cc.admin) + ' and the Fund Management Charge for each fund.</p>'
-          : '') +
-        (showGmabCol ? '<p>You have chosen to include the GMAB guarantee. As a result, while invested in those funds the guarantee and guarantee charge will apply.</p>' : '') +
+        '<p>The funds your policy is invested in, and the total fund based charge applicable for each fund, are set out in the table below. The total charge includes the Annual Management Charge, the Fund Management Charge and, where applicable, the relevant guarantee charge if selected.</p>' +
         '<table class="ct">' +
           '<thead>' + fundTblHdr + '</thead>' +
           '<tbody>' + fundRows + '</tbody>' +
