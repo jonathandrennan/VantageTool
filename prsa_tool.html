@@ -4,26 +4,33 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>PRSA Illustration Tool – Allianz</title>
+<!-- A1 Design System — Allianz Neo font + design tokens -->
+<link rel="stylesheet" href="https://elements.cdn.allianz.com/master/dist/a1-elements/a1-elements.css">
+<script type="module">
+  import { defineCustomElements } from "https://elements.cdn.allianz.com/master/loader/index.js";
+  defineCustomElements();
+</script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="prsa_data.js"></script>
 <style>
 :root {
+  /* ── A1 Design System tokens ── */
   --navy: #003781;
-  --teal: #13a0d3;
-  --tl: #e6f7f9;
-  --tm: #b3e8ef;
-  --gold: #F5A623;
-  --bg: #f0f2f5;
-  --gb: #d0d8e4;
-  --td: #1a2a3a;
-  --tm2: #4a5a6a;
-  --red: #e03e3e;
-  --grn: #1a9e5c;
+  --teal: #0377A8;
+  --tl: #DBEAF5;
+  --tm: #6590BD;
+  --gold: #DBA103;
+  --bg: #F0F7FC;
+  --gb: #C3D7E9;
+  --td: #2F3C49;
+  --tm2: #68727B;
+  --red: #DD0A42;
+  --grn: #05813C;
   --white: #ffffff;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: 'Segoe UI', Arial, sans-serif; background: var(--bg); color: var(--td); min-height: 100vh; }
-body::before { content: ''; display: block; height: 4px; background: linear-gradient(90deg, var(--navy) 0%, var(--teal) 60%, #00c4d8 100%); }
+body { font-family: 'Allianz Neo', 'Segoe UI', Arial, sans-serif; background: var(--bg); color: var(--td); min-height: 100vh; }
+body::before { content: ''; display: block; height: 4px; background: linear-gradient(90deg, var(--navy) 0%, var(--teal) 100%); }
 .hdr { background: var(--white); padding: 0 40px; display: flex; align-items: center; justify-content: space-between; height: 80px; border-bottom: 1px solid #e0e6ed; box-shadow: 0 2px 8px rgba(0,55,129,0.07); }
 .hdr-l { display: flex; align-items: center; gap: 20px; }
 .hdr-divider { width: 1px; height: 36px; background: var(--gb); margin: 0 4px; }
@@ -118,6 +125,15 @@ tr:last-child td { border-bottom: none; }
 .info-cell { background: var(--bg); border-radius: 6px; padding: 10px 14px; }
 .info-lbl { font-size: 10px; font-weight: 700; color: var(--tm2); text-transform: uppercase; letter-spacing: .5px; }
 .info-val { font-size: 15px; font-weight: 700; color: var(--navy); margin-top: 3px; }
+.override-badge { display: inline-block; background: var(--tl); color: var(--navy); font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .3px; padding: 2px 6px; border-radius: 4px; margin-left: 6px; vertical-align: middle; }
+.spup-edit-trigger { display: block; background: none; border: none; text-decoration: underline; cursor: pointer; padding: 0; font-family: inherit; text-align: left; }
+.spup-edit-trigger:hover { color: var(--navy); }
+.spup-popover { position: absolute; top: 100%; left: 0; margin-top: 6px; background: var(--white); border: 1px solid var(--gb); border-radius: 8px; box-shadow: 0 4px 16px rgba(0,55,129,0.15); padding: 12px 14px; z-index: 30; min-width: 200px; }
+.spup-stepper { display: flex; align-items: center; gap: 8px; }
+.step-btn { width: 26px; height: 26px; border-radius: 50%; border: 1.5px solid var(--gb); background: var(--white); color: var(--navy); font-size: 16px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; line-height: 1; font-family: inherit; transition: all .15s; }
+.step-btn:hover { background: var(--navy); color: #fff; border-color: var(--navy); }
+.spup-stepper-val { font-size: 14px; font-weight: 700; color: var(--navy); min-width: 52px; text-align: center; }
+.reset-link { background: none; border: none; color: var(--tm2); font-size: 10px; text-decoration: underline; cursor: pointer; padding: 0; font-family: inherit; }
 .print-meta { display: none; padding: 6px 0 10px; font-size: 11px; color: var(--tm2); border-bottom: 1px solid #e0e6ed; margin-bottom: 16px; }
 @page { margin: 1cm 0.5cm; }
 @media print {
@@ -396,6 +412,10 @@ tr:last-child td { border-bottom: none; }
           </div>
         </div>
         <span class="hint" id="hint-code"></span>
+        <div style="position:relative;">
+          <button type="button" class="hint spup-edit-trigger" id="spup-popover-trigger" onclick="toggleSpUpPopover(); event.stopPropagation();">Edit SP Upfront Commission</button>
+          <div class="spup-popover" id="spup-popover" style="display:none;" onclick="event.stopPropagation();"></div>
+        </div>
       </div>
     </div>
   </div>
@@ -590,6 +610,7 @@ var state = {
   diySelected: {}, // fundId -> bool (phase 1 selection)
   diyAllocs: {},   // fundId -> pct (0-100)
   diyGmab: {},     // fundId -> bool (per-fund GMAB, DIY + nonstandard only)
+  spUpOverride: null, // manual override of the SP upfront commission rate (decimal), null = use product code default
 };
 var illResult = null;
 var illChart = null;
@@ -853,6 +874,7 @@ function toggleCsel(e, id) {
 
 document.addEventListener('click', function() {
   document.querySelectorAll('.csel.open').forEach(function(x){ x.classList.remove('open'); });
+  if (spUpPopoverOpen) toggleSpUpPopover(false);
 });
 
 function setCodeSeries(s) {
@@ -861,12 +883,14 @@ function setCodeSeries(s) {
   var curNum = getCodeNum();
   var newNum = numsForSeries.indexOf(curNum) >= 0 ? curNum : numsForSeries[0];
   state.code = s + newNum;
+  state.spUpOverride = null;
   rebuildCodeOptions();
   markDirty();
 }
 
 function setCodeNum(n) {
   state.code = getCodeSeries() + n;
+  state.spUpOverride = null;
   rebuildCodeOptions();
   markDirty();
 }
@@ -876,9 +900,10 @@ function onCodeChange() {
   if (!cc) return;
   var hint = 'Admin: ' + pct(cc.admin) + ' p.a.';
   if (cc.ongoing > 0) hint += ' | Ongoing: ' + pct(cc.ongoing) + ' p.a.';
-  if (cc.spUp > 0) hint += ' | SP upfront: ' + pct(cc.spUp);
+  hint += ' | SP upfront: ' + pct(currentSpUpRate()) + (state.spUpOverride != null ? ' (Manual)' : '');
   if (cc.rpPct > 0) hint += ' | RP upfront: ' + pct(cc.rpPct) + ' × term (max ' + pct(cc.rpMax) + ')';
   document.getElementById('hint-code').textContent = hint;
+  renderSpUpPopover();
   markDirty();
 }
 
@@ -1341,9 +1366,10 @@ function runIllustration() {
   var annualRp = rpMonthly * (state.freq === 'monthly' ? 12 : state.freq === 'quarterly' ? 4 : 1);
   var rpUpfrontComm = rpUpfrontPct * annualRp * (1 - rpContribCharge);
 
-  // SP upfront commission
+  // SP upfront commission (rate may be manually overridden via the Commission tab edit control)
   var spNet = spRaw * (1 - spContribCharge);
-  var spUpfrontComm = cc.spUp * spNet;
+  var spUpRate = (state.spUpOverride != null) ? state.spUpOverride : cc.spUp;
+  var spUpfrontComm = spUpRate * spNet;
 
   // Opening fund value (no contribution charge)
   var ofvNet = ofvRaw;
@@ -1465,7 +1491,8 @@ function runIllustration() {
     blendedFundCharge: blendedFundCharge,
     fundNC, fundWC, realMat, monthlyAnn,
     snapshots,
-    spRaw, rpRaw, spUpfrontComm, rpUpfrontComm,
+    spRaw, rpRaw, spUpfrontComm, rpUpfrontComm, spUpRate,
+    spUpOverridden: state.spUpOverride != null,
     cc, gmab, blendedGmab,
     isGlidepath: isGlidepath,
   };
@@ -1587,7 +1614,7 @@ function renderIllustration() {
       datasets: [
         { type:'bar',  label:'Contributions', data:dsContr, backgroundColor:'rgba(0,55,129,0.12)', borderColor:'rgba(0,55,129,0.3)', borderWidth:1, yAxisID:'y', order:3 },
         { type:'line', label:'Without Charges', data:dsNC, borderColor:'#003781', borderWidth:2, borderDash:[5,4], pointRadius:0, fill:false, tension:0.3, yAxisID:'y', order:2 },
-        { type:'line', label:'With Charges',    data:dsWC, borderColor:'#13a0d3', borderWidth:2.5, pointRadius:0, fill:false, tension:0.3, yAxisID:'y', order:1 },
+        { type:'line', label:'With Charges',    data:dsWC, borderColor:'#0377A8', borderWidth:2.5, pointRadius:0, fill:false, tension:0.3, yAxisID:'y', order:1 },
       ]
     },
     options: {
@@ -1622,12 +1649,12 @@ function renderCommission() {
   var cc = r.cc;
   var grid = document.getElementById('comm-info-grid');
   grid.innerHTML =
-    '<div class="info-cell"><div class="info-lbl">SP Upfront Commission</div><div class="info-val">' + pct(cc.spUp) + '</div></div>' +
+    '<div class="info-cell"><div class="info-lbl">SP Upfront Commission</div><div class="info-val">' + pct(r.spUpRate) + (r.spUpOverridden ? '<span class="override-badge">Manual</span>' : '') + '</div></div>' +
     '<div class="info-cell"><div class="info-lbl">RP Upfront Commission</div><div class="info-val">' + (cc.rpPct > 0 ? pct(cc.rpPct) + ' × term (max ' + pct(cc.rpMax) + ')' : 'None') + '</div></div>' +
     '<div class="info-cell"><div class="info-lbl">Ongoing (Fund-Based)</div><div class="info-val">' + pct(cc.ongoing) + ' p.a.</div></div>' +
     '<div class="info-cell"><div class="info-lbl">SP Upfront Amount</div><div class="info-val">' + fEUR(r.spUpfrontComm) + '</div></div>' +
     '<div class="info-cell"><div class="info-lbl">RP Upfront Amount</div><div class="info-val">' + fEUR(r.rpUpfrontComm) + '</div></div>' +
-    '<div class="info-cell"><div class="info-lbl">Clawback Period</div><div class="info-val">' + (cc.spUp > 0 || cc.rpPct > 0 ? '5 years' : 'N/A') + '</div></div>';
+    '<div class="info-cell"><div class="info-lbl">Clawback Period</div><div class="info-val">' + (r.spUpRate > 0 || cc.rpPct > 0 ? '5 years' : 'N/A') + '</div></div>';
 
   var milestonesYr = [1, 2, 3, 4, 5, 10, 15, 20, 25, 30, 35];
   var tbody = document.getElementById('comm-tbody');
@@ -1651,7 +1678,60 @@ function renderCommission() {
     'Commission figures shown above represent projected intermediary and sales remuneration. ' +
     'Upfront single premium commission of ' + fEUR(r.spUpfrontComm) + ' and upfront regular premium commission of ' + fEUR(r.rpUpfrontComm) + ' are payable in year 1. ' +
     'Commission clawback applies on cool-off or surrender/transfer to another PRSA provider during the first 5 years. ' +
-    'All amounts are illustrative only and subject to actual policy terms.';
+    'All amounts are illustrative only and subject to actual policy terms.' +
+    (r.spUpOverridden ? ' The SP upfront commission rate has been manually overridden from the ' + pct(cc.spUp) + ' product code default to ' + pct(r.spUpRate) + '.' : '');
+}
+
+// ─── SP UPFRONT COMMISSION OVERRIDE (pop-out stepper beside Product Code) ───
+var SPUP_STEP = 0.005; // 0.5 percentage points
+var spUpPopoverOpen = false;
+
+function currentSpUpDefault() {
+  var cc = CODES[state.code];
+  return cc ? cc.spUp : 0;
+}
+function currentSpUpRate() {
+  return (state.spUpOverride != null) ? state.spUpOverride : currentSpUpDefault();
+}
+function toggleSpUpPopover(forceState) {
+  spUpPopoverOpen = (typeof forceState === 'boolean') ? forceState : !spUpPopoverOpen;
+  renderSpUpPopover();
+}
+function renderSpUpPopover() {
+  var pop = document.getElementById('spup-popover');
+  if (!pop) return;
+  pop.style.display = spUpPopoverOpen ? 'block' : 'none';
+  if (!spUpPopoverOpen) return;
+  var def = currentSpUpDefault();
+  var eff = currentSpUpRate();
+  var overridden = state.spUpOverride != null;
+  pop.innerHTML =
+    '<div class="spup-stepper">' +
+      '<button type="button" class="step-btn" onclick="stepSpUp(-1)">&minus;</button>' +
+      '<span class="spup-stepper-val">' + pct(eff) + '</span>' +
+      '<button type="button" class="step-btn" onclick="stepSpUp(1)">+</button>' +
+    '</div>' +
+    (overridden ? '<button type="button" class="reset-link" style="display:block;margin-top:8px;" onclick="resetSpUpOverride()">Reset to ' + pct(def) + '</button>' : '');
+}
+function applySpUpRateChange(next) {
+  var def = currentSpUpDefault();
+  // Snap back to "no override" once the stepper returns to the code's own default
+  state.spUpOverride = (Math.abs(next - def) < 0.0001) ? null : next;
+  onCodeChange(); // refreshes the small SP upfront figure in the hint text and re-renders the popover
+  if (illResult) {
+    var scrollY = window.scrollY;
+    runIllustration();
+    switchResult('commission');
+    window.scrollTo(0, scrollY);
+  }
+}
+function stepSpUp(dir) {
+  var next = currentSpUpRate() + dir * SPUP_STEP;
+  if (next < 0) next = 0;
+  applySpUpRateChange(Math.round(next * 2000) / 2000);
+}
+function resetSpUpOverride() {
+  applySpUpRateChange(currentSpUpDefault());
 }
 
 // ─── DOCUMENT GENERATION ─────────────────────────────────────────────────────
@@ -1783,7 +1863,7 @@ function generateDocument() {
     'body { font-family:Arial,Helvetica,sans-serif; background:#e8e8e8; font-size:10pt; color:#2c2c2c; }',
     '.pg { width:210mm; background:#fff; margin:0 auto 6mm; padding:12mm 18mm 18mm; position:relative; page-break-after:always; }',
     '.pg.last { page-break-after:auto; }',
-    '.pghdr { margin-bottom:5mm; border-bottom:2pt solid #13a0d3; padding-bottom:4mm; }',
+    '.pghdr { margin-bottom:5mm; border-bottom:2pt solid #0377A8; padding-bottom:4mm; }',
     '.pgbody { display:flex; gap:10mm; }',
     '.meta { width:32mm; flex-shrink:0; font-size:8pt; color:#777; line-height:1.7; padding-top:2pt; }',
     '.meta .addr { margin-top:8pt; font-size:7.5pt; line-height:1.8; }',
@@ -2080,13 +2160,13 @@ function showStratInfo() {
   var profiles = [
     {
       label: 'Balanced',
-      color: '#1a9e5c',
+      color: '#05813C',
       desc: 'A more cautious blend weighted towards lower-volatility assets and bonds, with a smaller equity allocation. Prioritises capital preservation with modest growth potential.',
       suitable: 'Investors with a shorter time horizon, lower appetite for short-term volatility, or those approaching retirement who want to protect accumulated savings.'
     },
     {
       label: 'Dynamic',
-      color: '#00A0B4',
+      color: '#0377A8',
       desc: 'A medium-risk mix balancing equities and bonds in roughly equal measure. Targets solid long-term growth while maintaining meaningful downside protection.',
       suitable: 'Investors with a medium-term horizon and a moderate risk appetite. The most widely selected profile, suited to the typical pension saver.'
     },
