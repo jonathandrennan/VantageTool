@@ -258,6 +258,41 @@ tr:last-child td { border-bottom: none; }
 .fund-modal-charge-row:last-child { margin-bottom: 0; }
 .fmc-lbl { color: var(--tm2); }
 .fmc-val { font-weight: 700; color: var(--navy); }
+/* ── Mode selector (Step 3) ── */
+.mode-select-wrap { margin-top: 22px; padding-top: 20px; border-top: 1px solid #f0f2f5; }
+.mode-select-label { font-size: 11px; font-weight: 700; color: var(--tm2); text-transform: uppercase; letter-spacing: .7px; margin-bottom: 10px; }
+.mode-btn-row { display: flex; gap: 12px; }
+.mode-btn { flex: 1; text-align: left; background: var(--white); border: 2px solid var(--gb); border-radius: 8px; padding: 14px 18px; cursor: pointer; font-family: inherit; transition: all .2s; }
+.mode-btn:hover { border-color: var(--teal); }
+.mode-btn.active { border-color: var(--navy); background: #f0f4fa; box-shadow: 0 2px 8px rgba(0,55,129,.1); }
+.mode-btn-title { font-size: 13.5px; font-weight: 700; color: var(--navy); margin-bottom: 3px; }
+.mode-btn-sub { font-size: 11px; color: var(--tm2); line-height: 1.4; }
+/* ── Custom Analysis config panel ── */
+.ca-config-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px 28px; }
+.ca-section-title { font-size: 11px; font-weight: 700; color: var(--tm2); text-transform: uppercase; letter-spacing: .6px; margin-bottom: 10px; }
+.ca-inline-input { display: flex; align-items: center; gap: 10px; }
+.ca-inline-input input { width: 100px; border: 1.5px solid var(--gb); border-radius: 6px; padding: 8px 11px; font-size: 14px; text-align: right; font-family: inherit; outline: none; }
+.ca-inline-input input:focus { border-color: var(--teal); }
+.ca-yr-tools { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+.ca-yr-tools input { width: 80px; border: 1.5px solid var(--gb); border-radius: 6px; padding: 6px 9px; font-size: 13px; text-align: right; font-family: inherit; outline: none; }
+.ca-btn-sm { background: var(--white); border: 1.5px solid var(--gb); border-radius: 6px; padding: 7px 13px; font-size: 12px; font-weight: 600; color: var(--navy); cursor: pointer; font-family: inherit; transition: all .15s; white-space: nowrap; }
+.ca-btn-sm:hover { border-color: var(--teal); color: var(--teal); }
+.ca-yr-twrap { max-height: 340px; overflow-y: auto; border: 1px solid #e4eaf2; border-radius: 8px; }
+.ca-yr-twrap table { font-size: 12.5px; }
+.ca-yr-twrap thead th { position: sticky; top: 0; z-index: 1; }
+.ca-yr-twrap td:first-child { text-align: left; }
+.ca-yr-inp { width: 76px; border: 1.5px solid var(--gb); border-radius: 5px; padding: 5px 8px; font-size: 12.5px; text-align: right; font-family: inherit; outline: none; }
+.ca-yr-inp:focus { border-color: var(--teal); }
+.ca-copy-btn { background: none; border: 1px solid var(--gb); border-radius: 5px; width: 24px; height: 24px; font-size: 11px; color: var(--tm2); cursor: pointer; margin-left: 6px; font-family: inherit; }
+.ca-copy-btn:hover { border-color: var(--teal); color: var(--teal); }
+.ca-checkbox-row { display: flex; align-items: center; gap: 8px; }
+.ca-checkbox-row input[type=checkbox] { width: 16px; height: 16px; accent-color: var(--teal); cursor: pointer; }
+.ca-real-row td { background: var(--bg) !important; font-weight: 500; font-style: italic; color: var(--tm2); font-size: 11.5px; border-top: 1px dashed var(--gb); padding-top: 6px; padding-bottom: 8px; }
+.ca-real-row td:first-child { font-weight: 500; color: var(--tm2); }
+.ca-real-sub { font-size: 10.5px; font-weight: 500; color: var(--tm2); display: block; }
+.gtee-diff-pos { color: var(--grn); }
+.gtee-diff-neg { color: var(--red); }
+.ca-config-summary { padding: 16px 22px; }
 </style>
 </head>
 <body>
@@ -494,21 +529,37 @@ tr:last-child td { border-bottom: none; }
         <div class="fund-total">Total: <span id="fund-total-val" style="color:var(--red)">0%</span></div>
       </div>
     </div>
+    <div class="mode-select-wrap">
+      <div class="mode-select-label">Illustration Output</div>
+      <div class="mode-btn-row">
+        <button type="button" class="mode-btn active" id="mode-btn-srp" onclick="setAnalysisMode('srp')">
+          <div class="mode-btn-title">Regulatory SRP</div>
+          <div class="mode-btn-sub">Statement of Reasonable Projection using statutory assumptions.</div>
+        </button>
+        <button type="button" class="mode-btn" id="mode-btn-custom" onclick="setAnalysisMode('custom')">
+          <div class="mode-btn-title">Custom Analysis</div>
+          <div class="mode-btn-sub">Model your own returns and see how the GMAB guarantee behaves.</div>
+        </button>
+      </div>
+    </div>
   </div>
   <div class="step-err" id="step-3-err"></div>
   <div class="err-box" id="err-box"></div>
   <div class="step-nav">
     <button class="nav-back" onclick="prevStep()">&larr; &nbsp;Back</button>
-    <button class="nav-next" onclick="validateAndGenerate()" style="background:var(--navy);">Generate Illustration &nbsp;&rarr;</button>
+    <button class="nav-next" id="btn-generate" onclick="validateAndGenerate()" style="background:var(--navy);">Generate SRP Illustration &nbsp;&rarr;</button>
   </div>
 </div>
 
 <!-- RESULTS -->
 <div id="results-wrap">
+
+  <!-- ═══════════ SRP RESULTS (entirely separate from Custom Analysis below) ═══════════ -->
+  <div id="results-srp" style="display:none;">
   <div class="results-nav no-print">
     <button class="results-back" onclick="backToSetup()">&#8592; Policy Details</button>
-    <button class="result-tab active" id="rtab-illustration" onclick="switchResult('illustration')">Illustration (SRP)</button>
-    <button class="result-tab" id="rtab-commission" onclick="switchResult('commission')">Commission</button>
+    <button class="result-tab active" id="rtab-illustration" onclick="switchResultSRP('illustration')">Illustration (SRP)</button>
+    <button class="result-tab" id="rtab-commission" onclick="switchResultSRP('commission')">Commission</button>
     <div style="margin-left:auto;display:flex;align-items:center;gap:10px;">
       <button class="print-btn" id="btn-gen-stmt" onclick="generateDocument()">Generate SRP Statement</button>
       <button class="print-btn" id="btn-export-pdf" onclick="window.print()" style="background:var(--teal);">Export PDF</button>
@@ -591,8 +642,151 @@ tr:last-child td { border-bottom: none; }
     <div class="disc" id="comm-disc"></div>
   </div>
   </div><!-- /panel-commission -->
+  </div><!-- /results-srp -->
+
+  <!-- ═══════════ CUSTOM ANALYSIS RESULTS (entirely separate from SRP above) ═══════════ -->
+  <div id="results-custom" style="display:none;">
+  <div class="results-nav no-print">
+    <button class="results-back" onclick="backToSetup()">&#8592; Policy Details</button>
+    <button class="result-tab active" id="rtab-custom" onclick="switchResultCustom('custom')">Custom Analysis</button>
+    <button class="result-tab" id="rtab-commission-custom" onclick="switchResultCustom('commission-custom')">Commission</button>
+    <div style="margin-left:auto;display:flex;align-items:center;gap:10px;">
+      <button class="print-btn" id="btn-export-pdf-custom" onclick="generateCustomDocument()" style="background:var(--teal);">Export PDF</button>
+    </div>
+  </div>
+
+  <div class="result-panel active" id="panel-custom">
+  <div id="custom-placeholder" class="sumbox">Choose <strong>Custom Analysis</strong> on the Investment Strategy step and click <strong>Generate Custom Analysis</strong> to model your own returns.</div>
+  <div id="custom-content" style="display:none;">
+
+    <div class="sbar">
+      <div>
+        <div class="sname" id="ca-title">Allianz Vantage PRSA</div>
+        <div class="ssub" id="ca-sub"></div>
+      </div>
+      <div class="sparams" id="ca-params"></div>
+    </div>
+
+    <div class="card ca-config-summary">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+        <div style="font-size:13px;color:var(--td);" id="ca-config-summary-text">—</div>
+        <button type="button" class="ca-btn-sm" onclick="openCaConfigModal()">Edit Return Assumptions &nbsp;&#9998;</button>
+      </div>
+      <div class="ca-checkbox-row" style="margin-top:12px;">
+        <input type="checkbox" id="ca-scenario-checkbox" onchange="toggleScenarioDesc()">
+        <label for="ca-scenario-checkbox" style="font-size:13px;color:var(--td);cursor:pointer;">Include a scenario description in the PDF</label>
+      </div>
+      <div id="ca-scenario-wrap" style="display:none;margin-top:10px;">
+        <textarea id="ca-scenario-text" rows="3" style="width:100%;font-family:inherit;font-size:13px;padding:10px 12px;border:1.5px solid var(--gb);border-radius:6px;resize:vertical;" placeholder="Optional note for the PDF, e.g. the assumptions or context behind this scenario..." oninput="onScenarioDescChange()"></textarea>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="chdr">
+        <div class="chtitle">Projected Growth</div>
+        <div id="ca-chart-legend" style="display:flex;gap:16px;flex-wrap:wrap;align-items:center;"></div>
+      </div>
+      <div class="cwrap"><canvas id="custom-chart"></canvas></div>
+    </div>
+
+    <div class="card">
+      <div class="chdr">
+        <div class="chtitle">Fund Value Projections<span class="rp-sub" id="ca-table-sub"></span></div>
+        <div style="font-size:11px;color:var(--tm2);" id="ca-charge-line">—</div>
+      </div>
+      <div class="twrap" id="ca-table-wrap"></div>
+    </div>
+
+    <div class="disc" id="custom-disc"></div>
+  </div>
+  </div><!-- /panel-custom -->
+
+  <div class="result-panel" id="panel-commission-custom">
+  <div id="comm-custom-placeholder" class="sumbox">Generate a <strong>Custom Analysis</strong> to see commission projections for this scenario.</div>
+  <div id="comm-custom-content" style="display:none;">
+    <div class="card">
+      <div class="sec-hdr">Commission Structure</div>
+      <div class="info-grid" id="comm-custom-info-grid"></div>
+    </div>
+    <div class="card">
+      <div class="chdr">
+        <div class="chtitle">Projected Intermediary Remuneration<span class="rp-sub" id="comm-custom-scenario-sub"></span></div>
+        <button class="print-btn" onclick="generateCommissionCustomDocument()">Generate Commission Statement</button>
+      </div>
+      <div class="twrap">
+        <table>
+          <thead><tr>
+            <th style="text-align:left;">Year</th>
+            <th>Contributions in Year (€)</th>
+            <th>Projected Remuneration Payable (€)</th>
+          </tr></thead>
+          <tbody id="comm-custom-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="disc" id="comm-custom-disc"></div>
+  </div>
+  </div><!-- /panel-commission-custom -->
+  </div><!-- /results-custom -->
 
 </div><!-- /results-wrap -->
+
+<!-- Custom Analysis return-assumptions popout -->
+<div class="fund-modal-overlay" id="ca-config-modal-overlay" onclick="closeCaConfigModal()">
+  <div class="fund-modal" style="max-width:640px;" onclick="event.stopPropagation()">
+    <button class="fund-modal-close" onclick="closeCaConfigModal()">&#x2715;</button>
+    <div class="fund-modal-name">Return Assumptions</div>
+
+    <div class="ca-config-grid">
+      <div>
+        <div class="ca-section-title">Return Mode</div>
+        <div class="tgg" style="max-width:320px;">
+          <button type="button" class="tg active" id="ca-mode-flat" onclick="setCustomReturnMode('flat')">Flat Return</button>
+          <button type="button" class="tg" id="ca-mode-yearly" onclick="setCustomReturnMode('yearly')">Year-by-Year</button>
+        </div>
+      </div>
+      <div>
+        <div class="ca-section-title">Cash / Deposit Comparison</div>
+        <div class="ca-checkbox-row">
+          <input type="checkbox" id="ca-cash-checkbox" onchange="toggleCashComparison()">
+          <label for="ca-cash-checkbox" style="font-size:13px;color:var(--td);cursor:pointer;">Include Cash Comparison Column</label>
+        </div>
+        <div class="ca-inline-input" id="ca-cash-rate-wrap" style="display:none;margin-top:10px;">
+          <label style="font-size:12px;color:var(--tm2);">Cash/Deposit Return</label>
+          <input type="text" inputmode="decimal" id="ca-cash-rate" value="2.0" onchange="onCashReturnChange()">
+          <span style="font-size:13px;color:var(--tm2);">%</span>
+        </div>
+      </div>
+    </div>
+
+    <div id="ca-flat-wrap" style="margin-top:20px;">
+      <div class="ca-section-title">Custom Gross Return</div>
+      <div class="ca-inline-input">
+        <input type="text" inputmode="decimal" id="ca-flat-return" onchange="onCustomFlatReturnChange()">
+        <span style="font-size:13px;color:var(--tm2);">% p.a.</span>
+        <button type="button" class="ca-btn-sm" id="ca-flat-reset" style="display:none;" onclick="resetCustomFlatReturn()">Reset to default</button>
+      </div>
+      <div class="hint" id="ca-flat-hint"></div>
+    </div>
+
+    <div id="ca-yearly-wrap" style="display:none;margin-top:20px;">
+      <div class="ca-section-title">Gross Return by Year</div>
+      <div class="ca-yr-tools">
+        <button type="button" class="ca-btn-sm" onclick="resetYearlyDefaults()">Reset All to Default</button>
+        <span style="color:var(--gb);">|</span>
+        <label style="font-size:12px;color:var(--tm2);">Apply to all:</label>
+        <input type="text" inputmode="decimal" id="ca-apply-all-val" value="0">
+        <span style="font-size:12px;color:var(--tm2);">%</span>
+        <button type="button" class="ca-btn-sm" onclick="applyToAllYears()">Apply</button>
+      </div>
+      <div class="ca-yr-twrap" id="ca-yr-table-wrap"></div>
+    </div>
+
+    <div style="margin-top:22px;text-align:right;">
+      <button type="button" class="cbtn" onclick="closeCaConfigModal()">Done</button>
+    </div>
+  </div>
+</div>
 
 </div><!-- /main -->
 
@@ -611,9 +805,22 @@ var state = {
   diyAllocs: {},   // fundId -> pct (0-100)
   diyGmab: {},     // fundId -> bool (per-fund GMAB, DIY + nonstandard only)
   spUpOverride: null, // manual override of the SP upfront commission rate (decimal), null = use product code default
+  uiMode: 'srp', // 'srp' | 'custom' — which output the Step 3 "Generate" button produces
+  custom: {
+    returnMode: 'flat',        // 'flat' | 'yearly'
+    flatOverride: null,        // decimal, null = use weighted-average default
+    yearlyOverrides: {},       // year(1-based) -> decimal override
+    includeCash: false,
+    cashReturn: 0.02,          // decimal
+    includeScenarioDesc: false, // whether the scenario description block is added to the PDF
+    scenarioDesc: '',            // free-text adviser note, PDF-only
+  },
 };
 var illResult = null;
 var illChart = null;
+var customResult = null;
+var customChart = null;
+var customChartData = null;
 var isDirty = false;
 
 // ─── INIT ───────────────────────────────────────────────────────────────────
@@ -738,13 +945,22 @@ function backToSetup() {
   window.scrollTo(0, 0);
 }
 
-function switchResult(name) {
-  document.querySelectorAll('.result-tab').forEach(function(t){ t.classList.remove('active'); });
-  document.querySelectorAll('.result-panel').forEach(function(p){ p.classList.remove('active'); });
+// SRP and Custom Analysis results are entirely separate containers (#results-srp /
+// #results-custom) — each with its own nav/tabs — so the two modes can never be
+// tab-switched between; returning to Policy Details is the only way to change mode.
+function switchResultSRP(name) {
+  document.querySelectorAll('#results-srp .result-tab').forEach(function(t){ t.classList.remove('active'); });
+  document.querySelectorAll('#results-srp .result-panel').forEach(function(p){ p.classList.remove('active'); });
   document.getElementById('rtab-' + name).classList.add('active');
   document.getElementById('panel-' + name).classList.add('active');
   var genBtn = document.getElementById('btn-gen-stmt');
   if (genBtn) genBtn.style.display = name === 'illustration' ? '' : 'none';
+}
+function switchResultCustom(name) {
+  document.querySelectorAll('#results-custom .result-tab').forEach(function(t){ t.classList.remove('active'); });
+  document.querySelectorAll('#results-custom .result-panel').forEach(function(p){ p.classList.remove('active'); });
+  document.getElementById('rtab-' + name).classList.add('active');
+  document.getElementById('panel-' + name).classList.add('active');
 }
 
 // ─── FORM HANDLERS ──────────────────────────────────────────────────────────
@@ -1205,6 +1421,13 @@ function onRpChange() {
   markDirty();
 }
 
+function setAnalysisMode(mode) {
+  state.uiMode = mode;
+  document.getElementById('mode-btn-srp').classList.toggle('active', mode === 'srp');
+  document.getElementById('mode-btn-custom').classList.toggle('active', mode === 'custom');
+  document.getElementById('btn-generate').textContent = (mode === 'srp' ? 'Generate SRP Illustration' : 'Generate Custom Analysis') + '  →';
+}
+
 function validateAndGenerate() {
   var errs = validateStep(3);
   var errEl = document.getElementById('step-3-err');
@@ -1214,7 +1437,11 @@ function validateAndGenerate() {
     return;
   }
   errEl.style.display = 'none';
-  runIllustration();
+  if (state.uiMode === 'custom') {
+    runCustomAnalysis();
+  } else {
+    runIllustration();
+  }
 }
 
 // ─── CALCULATION ENGINE ─────────────────────────────────────────────────────
@@ -1466,10 +1693,16 @@ function runIllustration() {
   }
 
   // --- Annuity calculation ---
-  var annFactor  = getAnnuityFactor(nra, state.gender, ANN_INTEREST, ANN_ESC, ANN_GUARANTEE);
   // Continuous age-based term (NOT termYears, which rounds up to whole months for the
   // projection loop) — matches SRP!D75/C42's (SRP_NRA - SRP_Current_Age) exponent.
   var termYearsExact = nra - ageAtStart;
+  // Within 5 years of retirement, the SRP switches from the long-term mortality-table
+  // annuity factor to the live Irish Life quote factor — matches SRP!C52:
+  // IF((SRP_NRA-SRP_Current_Age)<=5, 'Irish Life Quote'!$T$9/12, SUMPRODUCT(...))
+  // where 'Irish Life Quote'!T9 = 12/T8, so T9/12 reduces to 1/T8.
+  var annFactor = (termYearsExact <= 5)
+    ? (1 / ANN_IL_QUOTE_RATE)
+    : getAnnuityFactor(nra, state.gender, ANN_INTEREST, ANN_ESC, ANN_GUARANTEE);
   var realMat    = fundWC / Math.pow(1 + INFLATION, termYearsExact);
   var mortImproveRate   = state.gender === 'F' ? ANN_MORT_IMPROVE_F : ANN_MORT_IMPROVE_M;
   var mortImproveFactor = Math.pow(1 + mortImproveRate, (start.getFullYear() - ANN_MORT_BASE_YEAR) + termYearsExact);
@@ -1505,7 +1738,9 @@ function runIllustration() {
   document.querySelectorAll('.step-panel').forEach(function(p){ p.classList.remove('active'); });
   document.getElementById('wizard-bar').style.display = 'none';
   document.getElementById('results-wrap').style.display = 'block';
-  switchResult('illustration');
+  document.getElementById('results-custom').style.display = 'none';
+  document.getElementById('results-srp').style.display = 'block';
+  switchResultSRP('illustration');
   currentStep = 4;
   maxStepReached = 4;
   window.scrollTo(0, 0);
@@ -1682,6 +1917,820 @@ function renderCommission() {
     (r.spUpOverridden ? ' The SP upfront commission rate has been manually overridden from the ' + pct(cc.spUp) + ' product code default to ' + pct(r.spUpRate) + '.' : '');
 }
 
+// ─── CUSTOM ANALYSIS ENGINE ─────────────────────────────────────────────────
+// Additive feature — does not read or modify illResult / runIllustration().
+// Each GMAB-eligible fund is tracked as an independent "pot" with its own
+// annually-ratcheted guarantee base (see runCustomAnalysis below).
+
+function getCustomPots() {
+  var pots = [];
+  if (state.strat === 'diy') {
+    var ids = state.prsaType === 'standard' ? STD_FUND_IDS : NONSTD_FUND_IDS;
+    ids.forEach(function(id) {
+      var alloc = (state.diyAllocs[id] || 0) / 100;
+      if (alloc <= 0) return;
+      var f = FUNDS_MAP[id];
+      pots.push({
+        fundId: id, fund: f, weightFixed: alloc,
+        glidepathKey: null, glidepathIdx: -1,
+        gmabActive: !!state.diyGmab[id] && f.gmabLevel > 0,
+      });
+    });
+  } else {
+    var strats = state.prsaType === 'standard' ? STRATS_STD : STRATS_NS;
+    var s = strats.find(function(x){ return x.id === state.strat; });
+    if (!s || !s.gpKey) return pots;
+    var gp = GP_DATA[s.gpKey];
+    gp.funds.forEach(function(id, idx) {
+      var f = FUNDS_MAP[id];
+      pots.push({
+        fundId: id, fund: f, weightFixed: null,
+        glidepathKey: s.gpKey, glidepathIdx: idx,
+        gmabActive: !!s.gmab && f.gmabLevel > 0,
+      });
+    });
+  }
+  return pots;
+}
+function potWeightAtMonth(pot, mtr) {
+  if (pot.weightFixed != null) return pot.weightFixed;
+  var m = Math.max(0, Math.min(mtr, 540));
+  return GP_DATA[pot.glidepathKey].weights[m][pot.glidepathIdx];
+}
+function computeDefaultGrossReturn(pots, termMonths) {
+  var gross = 0;
+  pots.forEach(function(p) { gross += potWeightAtMonth(p, termMonths) * p.fund.gross; });
+  return Math.min(gross, MAX_INVESTMENT_RETURN);
+}
+
+function runCustomAnalysis() {
+  var name      = document.getElementById('inp-name').value.trim() || 'Client';
+  var policyNum = document.getElementById('inp-policy-num').value.trim();
+  var dobStr    = document.getElementById('inp-dob').value;
+  var startStr  = document.getElementById('inp-start').value;
+  var nra       = parseInt(document.getElementById('inp-nra').value, 10);
+  var spRaw     = parseNum(document.getElementById('inp-sp').value);
+  var ofvRaw    = parseNum(document.getElementById('inp-ofv').value);
+  var rpRaw     = parseNum(document.getElementById('inp-rp').value);
+
+  var errs = [];
+  if (!dobStr) errs.push('Date of birth is required.');
+  if (!startStr) errs.push('Policy start date is required.');
+  if (isNaN(nra) || nra < 60 || nra > 75) errs.push('Retirement age must be between 60 and 75.');
+  if (spRaw === 0 && rpRaw === 0 && ofvRaw === 0) errs.push('At least one of Single Premium, Regular Premium, or Opening Fund Value must be entered.');
+  if (state.strat === 'diy') {
+    var idsChk = state.prsaType === 'standard' ? STD_FUND_IDS : NONSTD_FUND_IDS;
+    var totalChk = idsChk.reduce(function(s,id){ return s + (state.diyAllocs[id] || 0); }, 0);
+    if (Math.abs(totalChk - 100) > 0.5) errs.push('DIY fund allocation must sum to 100%. Currently: ' + totalChk + '%');
+  }
+  var errBox = document.getElementById('err-box');
+  if (errs.length) {
+    errBox.textContent = errs.join(' ');
+    errBox.style.display = 'block';
+    return;
+  }
+  errBox.style.display = 'none';
+
+  var dob   = new Date(dobStr);
+  var start = new Date(startStr);
+  var ageAtStart = (start - dob) / (365.25 * 24 * 3600 * 1000);
+  var retDate = new Date(dob.getFullYear() + nra, dob.getMonth(), dob.getDate());
+  var wholeMonths = (retDate.getFullYear() - start.getFullYear()) * 12
+                  + (retDate.getMonth() - start.getMonth());
+  var periodStart = new Date(start.getFullYear(), start.getMonth() + wholeMonths, start.getDate());
+  if (periodStart > retDate) {
+    wholeMonths--;
+    periodStart = new Date(start.getFullYear(), start.getMonth() + wholeMonths, start.getDate());
+  }
+  var periodEnd  = new Date(start.getFullYear(), start.getMonth() + wholeMonths + 1, start.getDate());
+  var fmf        = (retDate - periodStart) / (periodEnd - periodStart);
+  var termMonths = wholeMonths + (fmf > 0.0001 ? 1 : 0);
+
+  if (termMonths <= 0) {
+    errBox.textContent = 'Retirement date is in the past. Please check date of birth and retirement age.';
+    errBox.style.display = 'block';
+    return;
+  }
+
+  var cc   = CODES[state.code];
+  var pots = getCustomPots();
+  var gmabApplicable = pots.some(function(p){ return p.gmabActive; });
+  var termYears  = Math.ceil(termMonths / 12);
+  var termYearsExact = nra - ageAtStart;
+  var defaultGross = computeDefaultGrossReturn(pots, termMonths);
+
+  var spContribCharge = (spRaw > 0 && spRaw < CONTRIB_SP_THRESHOLD) ? CONTRIB_SP_CHARGE : 0;
+  var rpMonthly        = rpRaw;
+  var rpContribCharge   = (rpRaw > 0 && rpRaw < CONTRIB_RP_THRESHOLD) ? CONTRIB_RP_CHARGE : 0;
+  var spNet  = spRaw * (1 - spContribCharge);
+  var ofvNet = ofvRaw;
+
+  function returnForYear(y) {
+    if (state.custom.returnMode === 'flat') {
+      return (state.custom.flatOverride != null) ? state.custom.flatOverride : defaultGross;
+    }
+    var ov = state.custom.yearlyOverrides[y];
+    return (ov != null) ? ov : defaultGross;
+  }
+
+  // Commission (mirrors runIllustration's formulas exactly — independent of the
+  // custom return assumption, since upfront commission is a % of contributions
+  // and ongoing commission is a % of fund value, not of investment performance).
+  var rpUpfrontPct  = Math.min(cc.rpPct * termYears, cc.rpMax);
+  var annualRp      = rpMonthly * (state.freq === 'monthly' ? 12 : state.freq === 'quarterly' ? 4 : 1);
+  var rpUpfrontComm = rpUpfrontPct * annualRp * (1 - rpContribCharge);
+  var spUpRate      = (state.spUpOverride != null) ? state.spUpOverride : cc.spUp;
+  var spUpfrontComm = spUpRate * spNet;
+  var ongoingMonthly = Math.pow(1 + cc.ongoing, 1/12) - 1;
+
+  var adminAnnual = cc.admin;
+  pots.forEach(function(p) { p.valueOff = 0; p.valueOn = 0; p.base = 0; });
+
+  var noChargeTotal = 0, cashTotal = 0, totalContrib = 0;
+  var escalFactor = 1;
+  var cashAnnualRate  = state.custom.cashReturn;
+  var cashMonthlyRate = Math.pow(1 + cashAnnualRate, 1/12) - 1;
+
+  var year0 = { contrib: ofvRaw + spRaw, noCharge: ofvRaw + spRaw, off: ofvNet + spNet, on: ofvNet + spNet, cash: ofvRaw + spRaw };
+
+  var rows = [];
+  var commRows = [];
+  var m = 0;
+  for (var y = 1; y <= termYears; y++) {
+    var yearAnnualReturn = returnForYear(y);
+    var yearMonthlyRate  = Math.pow(1 + yearAnnualReturn, 1/12) - 1;
+    var contribThisYearNet = {};
+    pots.forEach(function(p){ contribThisYearNet[p.fundId] = 0; });
+    var rpInYear = 0, commInYear = 0;
+
+    var monthsThisYear = Math.min(12, termMonths - m);
+    for (var mm = 1; mm <= monthsThisYear; mm++) {
+      m++;
+      if (m > 1 && (m - 1) % 12 === 0) {
+        if (state.esc > 0) escalFactor *= (1 + state.esc / 100);
+      }
+      var rpGross = 0;
+      if (rpRaw > 0) {
+        var due = false;
+        if (state.freq === 'monthly')   due = true;
+        if (state.freq === 'quarterly') due = (m % 3 === 1);
+        if (state.freq === 'annual')    due = (m % 12 === 1);
+        if (due) rpGross = rpMonthly * escalFactor;
+      }
+      var rpNet = rpGross * (1 - rpContribCharge);
+      var seedGross = (m === 1) ? (ofvRaw + spRaw) : 0;
+      var seedNet   = (m === 1) ? (ofvNet + spNet) : 0;
+
+      var mtr = termMonths - m;
+      var isFinal = (m === termMonths) && fmf > 0.0001;
+      var monthRate = isFinal ? yearMonthlyRate * fmf : yearMonthlyRate;
+      var adminMonthly = 1 - Math.pow(1 - adminAnnual, 1/12);
+      if (isFinal) adminMonthly *= fmf;
+
+      pots.forEach(function(p) {
+        var w = potWeightAtMonth(p, mtr);
+        var contribNet = seedNet * w + rpNet * w;
+        contribThisYearNet[p.fundId] += contribNet;
+
+        var fundAMCMonthly = 1 - Math.pow(1 - p.fund.charge, 1/12);
+        if (isFinal) fundAMCMonthly *= fmf;
+        var gmabChargeMonthly = 0;
+        if (p.gmabActive) {
+          gmabChargeMonthly = 1 - Math.pow(1 - p.fund.gmab, 1/12);
+          if (isFinal) gmabChargeMonthly *= fmf;
+        }
+
+        var midOff = p.valueOff + contribNet;
+        var growthOff = midOff * monthRate;
+        p.valueOff = midOff + growthOff - (midOff + growthOff/2) * (adminMonthly + fundAMCMonthly);
+
+        var midOn = p.valueOn + contribNet;
+        var growthOn = midOn * monthRate;
+        p.valueOn = midOn + growthOn - (midOn + growthOn/2) * (adminMonthly + fundAMCMonthly + gmabChargeMonthly);
+      });
+
+      noChargeTotal = (noChargeTotal + seedGross + rpGross) * (1 + monthRate);
+      cashTotal     = (cashTotal + seedGross + rpGross) * (1 + (isFinal ? cashMonthlyRate * fmf : cashMonthlyRate));
+      totalContrib += seedGross + rpGross;
+      rpInYear     += rpGross;
+
+      // Ongoing commission this month, on the client's actual fund value (the
+      // guarantee-on pot total when a guarantee is in force, else the charge-bearing total).
+      var fundValueThisMonth = 0;
+      pots.forEach(function(p) { fundValueThisMonth += gmabApplicable ? p.valueOn : p.valueOff; });
+      commInYear += fundValueThisMonth * ongoingMonthly;
+    }
+
+    pots.forEach(function(p) {
+      if (!p.gmabActive) return;
+      var base  = p.base + contribThisYearNet[p.fundId];
+      var floor = base * p.fund.gmabLevel;
+      if (p.valueOn < floor) p.valueOn = floor;
+      p.base = p.valueOn;
+    });
+
+    var offTotal = 0, onTotal = 0;
+    pots.forEach(function(p) { offTotal += p.valueOff; onTotal += p.valueOn; });
+
+    rows.push({
+      year: y, grossReturn: yearAnnualReturn, contrib: totalContrib,
+      noCharge: noChargeTotal, withCharge: offTotal,
+      gteeOff: offTotal, gteeOn: onTotal, cash: cashTotal,
+      isMat: (m === termMonths),
+    });
+    commRows.push({
+      year: y, contribInYear: rpInYear + (y === 1 ? (ofvRaw + spRaw) : 0),
+      commInYear: (y === 1 ? (commInYear + spUpfrontComm + rpUpfrontComm) : commInYear),
+      isMat: (m === termMonths),
+    });
+  }
+
+  var fundAMCAvg = 0, gmabChargeAvg = 0, gmabLevelWeighted = 0, gmabWeightSum = 0;
+  pots.forEach(function(p) {
+    var w = potWeightAtMonth(p, termMonths);
+    fundAMCAvg += w * p.fund.charge;
+    if (p.gmabActive) {
+      gmabChargeAvg += w * p.fund.gmab;
+      gmabLevelWeighted += w * p.fund.gmabLevel;
+      gmabWeightSum += w;
+    }
+  });
+  var gmabLevelAvg = gmabWeightSum > 0 ? gmabLevelWeighted / gmabWeightSum : 0;
+
+  // Fund allocation summary (for the banner + PDF headers), at policy-start weights.
+  var allocParts = [];
+  pots.forEach(function(p) {
+    var w = potWeightAtMonth(p, termMonths);
+    if (w > 0.001) allocParts.push(p.fund.name + ' (' + Math.round(w * 100) + '%)');
+  });
+  var allocDesc = allocParts.join(', ');
+
+  var lastRow = rows[rows.length - 1];
+  customResult = {
+    name: name, policyNum: policyNum, code: state.code, prsaType: state.prsaType,
+    strat: state.strat, stratLabel: getStratLabel(), stratSub: getStratSub(), allocDesc: allocDesc,
+    nra: nra, termMonths: termMonths, termYears: termYears, termYearsExact: termYearsExact,
+    returnMode: state.custom.returnMode, defaultGross: defaultGross,
+    flatReturn: returnForYear(1),
+    gmabApplicable: gmabApplicable, gmabLevelAvg: gmabLevelAvg,
+    includeCash: state.custom.includeCash, cashReturn: cashAnnualRate,
+    adminAnnual: adminAnnual, fundAMCAvg: fundAMCAvg, gmabChargeAvg: gmabChargeAvg,
+    rows: rows, year0: year0,
+    finalOff: lastRow.gteeOff, finalOn: lastRow.gteeOn,
+    finalNoCharge: lastRow.noCharge, finalWithCharge: lastRow.withCharge, finalCash: lastRow.cash,
+    cc: cc, spUpRate: spUpRate, spUpfrontComm: spUpfrontComm, rpUpfrontComm: rpUpfrontComm,
+    spRaw: spRaw, rpRaw: rpRaw, commRows: commRows,
+  };
+
+  renderCustomConfig();
+  renderCustomAnalysis();
+  renderCommissionCustom();
+  isDirty = false;
+
+  document.querySelectorAll('.step-panel').forEach(function(p){ p.classList.remove('active'); });
+  document.getElementById('wizard-bar').style.display = 'none';
+  document.getElementById('results-wrap').style.display = 'block';
+  document.getElementById('results-srp').style.display = 'none';
+  document.getElementById('results-custom').style.display = 'block';
+  switchResultCustom('custom');
+  currentStep = 4;
+  maxStepReached = 4;
+  window.scrollTo(0, 0);
+}
+
+// ─── CUSTOM ANALYSIS — CONFIG PANEL (mode toggle, flat/yearly inputs, cash) ──
+function setCustomReturnMode(mode) {
+  state.custom.returnMode = mode;
+  document.getElementById('ca-mode-flat').classList.toggle('active', mode === 'flat');
+  document.getElementById('ca-mode-yearly').classList.toggle('active', mode === 'yearly');
+  document.getElementById('ca-flat-wrap').style.display   = mode === 'flat' ? 'block' : 'none';
+  document.getElementById('ca-yearly-wrap').style.display = mode === 'yearly' ? 'block' : 'none';
+  if (customResult) runCustomAnalysis();
+}
+function onCustomFlatReturnChange() {
+  var v = parseFloat(document.getElementById('ca-flat-return').value);
+  state.custom.flatOverride = isNaN(v) ? null : v / 100;
+  document.getElementById('ca-flat-reset').style.display = 'inline-block';
+  if (customResult) runCustomAnalysis();
+}
+function resetCustomFlatReturn() {
+  state.custom.flatOverride = null;
+  if (customResult) runCustomAnalysis(); else renderCustomConfig();
+}
+// Rebuilds to #ca-yr-table-wrap are deferred via setTimeout when triggered from
+// within that same table (an input's change event, or a button click inside a row) —
+// mutating/removing the triggering element's own DOM subtree synchronously during
+// that event throws "node to be removed is no longer a child of this node".
+function onYearlyReturnChange(y) {
+  var v = parseFloat(document.getElementById('ca-yr-inp-' + y).value);
+  if (isNaN(v)) { delete state.custom.yearlyOverrides[y]; } else { state.custom.yearlyOverrides[y] = v / 100; }
+  setTimeout(function() { if (customResult) runCustomAnalysis(); }, 0);
+}
+function resetYearlyDefaults() {
+  state.custom.yearlyOverrides = {};
+  setTimeout(function() { if (customResult) runCustomAnalysis(); else renderCustomConfig(); }, 0);
+}
+function applyToAllYears() {
+  var v = parseFloat(document.getElementById('ca-apply-all-val').value);
+  if (isNaN(v)) return;
+  var years = customTermYears || 1;
+  for (var y = 1; y <= years; y++) state.custom.yearlyOverrides[y] = v / 100;
+  setTimeout(function() { if (customResult) runCustomAnalysis(); else renderCustomConfig(); }, 0);
+}
+function copyDownYear(fromYear) {
+  var v = parseFloat(document.getElementById('ca-yr-inp-' + fromYear).value);
+  if (isNaN(v)) return;
+  var years = customTermYears || fromYear;
+  for (var y = fromYear; y <= years; y++) state.custom.yearlyOverrides[y] = v / 100;
+  setTimeout(function() { if (customResult) runCustomAnalysis(); else renderCustomConfig(); }, 0);
+}
+function toggleCashComparison() {
+  state.custom.includeCash = document.getElementById('ca-cash-checkbox').checked;
+  document.getElementById('ca-cash-rate-wrap').style.display = state.custom.includeCash ? 'flex' : 'none';
+  if (customResult) runCustomAnalysis();
+}
+function onCashReturnChange() {
+  var v = parseFloat(document.getElementById('ca-cash-rate').value);
+  state.custom.cashReturn = isNaN(v) ? 0.02 : v / 100;
+  if (customResult) runCustomAnalysis();
+}
+function openCaConfigModal() {
+  document.getElementById('ca-config-modal-overlay').classList.add('open');
+}
+// Adviser free-text note, PDF-only — no recompute needed, just kept in state.
+function toggleScenarioDesc() {
+  state.custom.includeScenarioDesc = document.getElementById('ca-scenario-checkbox').checked;
+  document.getElementById('ca-scenario-wrap').style.display = state.custom.includeScenarioDesc ? 'block' : 'none';
+}
+function onScenarioDescChange() {
+  state.custom.scenarioDesc = document.getElementById('ca-scenario-text').value;
+}
+function closeCaConfigModal() {
+  document.getElementById('ca-config-modal-overlay').classList.remove('open');
+}
+
+var customTermYears = 0;
+
+function renderCaConfigSummary() {
+  var el = document.getElementById('ca-config-summary-text');
+  if (!el) return;
+  var parts = [];
+  if (state.custom.returnMode === 'flat') {
+    var v = (state.custom.flatOverride != null) ? state.custom.flatOverride : (customResult ? customResult.defaultGross : 0);
+    parts.push('<strong>Flat return:</strong> ' + pct(v) + ' p.a.');
+  } else {
+    parts.push('<strong>Return mode:</strong> Year-by-year custom schedule');
+  }
+  parts.push(state.custom.includeCash ? 'Cash comparison at ' + pct(state.custom.cashReturn) + ' p.a.' : 'No cash comparison');
+  el.innerHTML = parts.join(' &nbsp;|&nbsp; ');
+}
+
+function renderCustomConfig() {
+  var pots = getCustomPots();
+  // Term (months) at time of config render: reuse termMonths from an existing customResult
+  // if available (kept in sync with the last successful run), else derive a quick estimate
+  // purely for defaulting the year-by-year table before the very first generation.
+  var termMonthsForDefault = customResult ? customResult.termMonths : 360;
+  var defaultGross = computeDefaultGrossReturn(pots, termMonthsForDefault);
+  customTermYears = customResult ? customResult.termYears : Math.ceil(termMonthsForDefault / 12);
+
+  document.getElementById('ca-mode-flat').classList.toggle('active', state.custom.returnMode === 'flat');
+  document.getElementById('ca-mode-yearly').classList.toggle('active', state.custom.returnMode === 'yearly');
+  document.getElementById('ca-flat-wrap').style.display   = state.custom.returnMode === 'flat' ? 'block' : 'none';
+  document.getElementById('ca-yearly-wrap').style.display = state.custom.returnMode === 'yearly' ? 'block' : 'none';
+
+  var flatVal = (state.custom.flatOverride != null) ? state.custom.flatOverride : defaultGross;
+  document.getElementById('ca-flat-return').value = (flatVal * 100).toFixed(2);
+  document.getElementById('ca-flat-hint').textContent = 'Weighted-average default from selected funds: ' + pct(defaultGross);
+  document.getElementById('ca-flat-reset').style.display = (state.custom.flatOverride != null) ? 'inline-block' : 'none';
+
+  var rowsHtml = '<table><thead><tr><th style="text-align:left;">Year</th><th style="text-align:left;">Gross Return (%)</th></tr></thead><tbody>';
+  for (var y = 1; y <= customTermYears; y++) {
+    var v = (state.custom.yearlyOverrides[y] != null) ? state.custom.yearlyOverrides[y] : defaultGross;
+    rowsHtml += '<tr><td>Year ' + y + '</td><td>' +
+      '<input type="text" inputmode="decimal" class="ca-yr-inp" id="ca-yr-inp-' + y + '" value="' + (v*100).toFixed(2) + '" onchange="onYearlyReturnChange(' + y + ')">' +
+      '<button type="button" class="ca-copy-btn" title="Copy this value down to all later years" onclick="copyDownYear(' + y + ')">&darr;</button>' +
+      '</td></tr>';
+  }
+  rowsHtml += '</tbody></table>';
+  document.getElementById('ca-yr-table-wrap').innerHTML = rowsHtml;
+
+  document.getElementById('ca-cash-checkbox').checked = state.custom.includeCash;
+  document.getElementById('ca-cash-rate-wrap').style.display = state.custom.includeCash ? 'flex' : 'none';
+  document.getElementById('ca-cash-rate').value = (state.custom.cashReturn * 100).toFixed(1);
+
+  renderCaConfigSummary();
+}
+
+// ─── CUSTOM ANALYSIS — RENDER RESULTS ───────────────────────────────────────
+function realValue(nominal, years) { return nominal / Math.pow(1 + INFLATION, years); }
+
+// Shared by the on-screen table header and the PDF export so the two can never
+// drift apart — aligned with the SRP methodology: ongoing adviser commission is
+// paid out of the admin charge, not an additional fund deduction, so it is
+// excluded here exactly as it is from the SRP's own "Total annual charge" KPI.
+function customChargeLineHtml(r) {
+  var annualChargeDisplay = r.adminAnnual + r.fundAMCAvg;
+  var chargeLine = '';
+  if (r.returnMode === 'flat') {
+    var netReturn = r.flatReturn - annualChargeDisplay - (r.gmabApplicable ? r.gmabChargeAvg : 0);
+    chargeLine += 'Gross return: <strong>' + pct(r.flatReturn) + '</strong> &nbsp;|&nbsp; Net return: <strong>' + pct(netReturn) + '</strong> &nbsp;|&nbsp; ';
+  }
+  chargeLine += 'Annual charge: <strong>' + pct(annualChargeDisplay) + '</strong>';
+  if (r.gmabApplicable) {
+    chargeLine += ' &nbsp;|&nbsp; Guarantee charge: <strong>' + pct(r.gmabChargeAvg) + '</strong> &nbsp;|&nbsp; Total charge: <strong>' + pct(annualChargeDisplay + r.gmabChargeAvg) + '</strong>';
+  }
+  return chargeLine;
+}
+
+function renderCustomAnalysis() {
+  var r = customResult;
+  if (!r) return;
+  document.getElementById('custom-placeholder').style.display = 'none';
+  document.getElementById('custom-content').style.display = 'block';
+
+  var termYrs  = Math.floor(r.termMonths / 12);
+  var termMths = r.termMonths % 12;
+
+  // Blue banner header (mirrors the SRP results banner) — condensed: client/policy
+  // on the left with just the fund(s) held, key metrics as the right-hand param chips.
+  document.getElementById('ca-title').textContent = r.name + ' — ' + (r.prsaType === 'standard' ? 'Standard' : 'Non-Standard') + ' PRSA (' + r.code + ')';
+  document.getElementById('ca-sub').textContent = r.allocDesc || '';
+
+  var paramsHtml =
+    '<div class="pm"><div class="pml">Policy Term</div><div class="pmv">' + termYrs + 'y ' + (termMths > 0 ? termMths + 'm' : '') + '</div><div class="pmu">to age ' + r.nra + '</div></div>';
+  document.getElementById('ca-params').innerHTML = paramsHtml;
+
+  document.getElementById('ca-charge-line').innerHTML = customChargeLineHtml(r);
+
+  document.getElementById('ca-scenario-checkbox').checked = state.custom.includeScenarioDesc;
+  document.getElementById('ca-scenario-wrap').style.display = state.custom.includeScenarioDesc ? 'block' : 'none';
+  document.getElementById('ca-scenario-text').value = state.custom.scenarioDesc || '';
+
+  document.getElementById('ca-table-sub').textContent = r.returnMode === 'flat' ? ' — flat return' : ' — year-by-year return';
+
+  // Chart — includes a "Yr 0" starting point so the initial contribution/investment
+  // step is visible; x-axis offset is disabled so it sits right on the y-axis.
+  // No contributions series: since regular-premium contributions run close to the
+  // axis floor next to the fund-value lines, a contributions line/fill was nearly
+  // always invisible against them — dropped rather than shown as a barely-there sliver.
+  var labels  = ['Yr 0'].concat(r.rows.map(function(x){ return 'Yr ' + x.year; }));
+  var datasets = [];
+  var legendHtml = '';
+  var caption = '';
+  if (r.includeCash) {
+    var cashLabel = 'Cash (' + pct(r.cashReturn) + ')';
+    datasets.push({ type:'line', label:cashLabel, data:[+r.year0.cash.toFixed(0)].concat(r.rows.map(function(x){ return +x.cash.toFixed(0); })), borderColor:'#DBA103', borderWidth:2, pointRadius:0, fill:false, tension:0.3, yAxisID:'y', order:3 });
+    legendHtml += '<div style="display:flex;align-items:center;gap:7px;font-size:12px;color:var(--tm2);"><div style="width:18px;height:3px;border-radius:2px;background:#DBA103;"></div>' + cashLabel + ' — deposit alternative, no charges</div>';
+  }
+  if (r.gmabApplicable) {
+    datasets.push({ type:'line', label:'Guarantee Off', data:[+r.year0.off.toFixed(0)].concat(r.rows.map(function(x){ return +x.gteeOff.toFixed(0); })), borderColor:'#003781', borderWidth:2, borderDash:[5,4], pointRadius:0, fill:false, tension:0.3, yAxisID:'y', order:2 });
+    datasets.push({ type:'line', label:'Guarantee On',  data:[+r.year0.on.toFixed(0)].concat(r.rows.map(function(x){ return +x.gteeOn.toFixed(0); })),  borderColor:'#0377A8', borderWidth:2.5, pointRadius:0, fill:false, tension:0.3, yAxisID:'y', order:1 });
+    legendHtml += '<div style="display:flex;align-items:center;gap:7px;font-size:12px;color:var(--tm2);"><div style="width:18px;height:3px;border-radius:2px;background:#003781;"></div>Guarantee Off — no guarantee charge, no floor</div>' +
+                  '<div style="display:flex;align-items:center;gap:7px;font-size:12px;color:var(--tm2);"><div style="width:18px;height:10px;border-radius:2px;background:#0377A8;"></div>Guarantee On (' + Math.round(r.gmabLevelAvg * 100) + '%) — guarantee charge deducted, floor applied</div>';
+    caption = 'Guarantee On includes the GMAB guarantee charge and the annual ratcheting floor; Guarantee Off excludes both.';
+  } else {
+    datasets.push({ type:'line', label:'Without Charges', data:[+r.year0.noCharge.toFixed(0)].concat(r.rows.map(function(x){ return +x.noCharge.toFixed(0); })), borderColor:'#003781', borderWidth:2, borderDash:[5,4], pointRadius:0, fill:false, tension:0.3, yAxisID:'y', order:2 });
+    datasets.push({ type:'line', label:'With Charges',    data:[+r.year0.off.toFixed(0)].concat(r.rows.map(function(x){ return +x.withCharge.toFixed(0); })), borderColor:'#0377A8', borderWidth:2.5, pointRadius:0, fill:false, tension:0.3, yAxisID:'y', order:1 });
+    legendHtml += '<div style="display:flex;align-items:center;gap:7px;font-size:12px;color:var(--tm2);"><div style="width:18px;height:3px;border-radius:2px;background:#003781;"></div>Without Charges — pure gross growth, no charges</div>' +
+                  '<div style="display:flex;align-items:center;gap:7px;font-size:12px;color:var(--tm2);"><div style="width:18px;height:10px;border-radius:2px;background:#0377A8;"></div>With Charges — admin &amp; fund charges deducted</div>';
+  }
+  document.getElementById('ca-chart-legend').innerHTML = legendHtml + (caption ? '<div style="width:100%;font-size:11px;color:var(--tm2);margin-top:4px;">' + caption + '</div>' : '');
+
+  customChartData = { labels: labels, datasets: datasets };
+
+  if (customChart) { customChart.destroy(); customChart = null; }
+  var ctx = document.getElementById('custom-chart').getContext('2d');
+  customChart = new Chart(ctx, {
+    data: { labels: labels, datasets: datasets },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode:'index', intersect:false },
+      plugins: { legend:{ display:false }, tooltip:{ callbacks:{ label: function(ctx){ return ' ' + ctx.dataset.label + ': ' + fEUR(ctx.raw); } } } },
+      scales: {
+        y: { title:{ display:true, text:'Fund Value (€)', font:{size:12}, color:'#33404A' }, ticks:{ callback: function(v){ return '€' + (v >= 1000000 ? (v/1000000).toFixed(1) + 'M' : v >= 1000 ? (v/1000).toFixed(0) + 'k' : v); }, font:{size:12}, color:'#33404A' }, grid:{ color:'rgba(0,0,0,0.04)' } },
+        x: { offset:false, title:{ display:true, text:'Policy Year', font:{size:12}, color:'#33404A' }, ticks:{ maxRotation:0, font:{size:11}, color:'#33404A' }, grid:{ color:'rgba(0,0,0,0.04)' } }
+      }
+    }
+  });
+
+  // Table — Cash sits between Contributions and the Guarantee/Charges columns.
+  var head = '<thead><tr><th style="text-align:left;">Year</th><th>Gross Return (%)</th><th>Total Contributions (€)</th>';
+  if (r.includeCash) head += '<th>Cash (' + pct(r.cashReturn) + ') (€)</th>';
+  if (r.gmabApplicable) {
+    head += '<th>Value — Guarantee Off (€)</th><th>Value — Guarantee On (' + Math.round(r.gmabLevelAvg * 100) + '%) (€)</th>';
+  } else {
+    head += '<th>Value — No Charges (€)</th><th>Value — With Charges (€)</th>';
+  }
+  head += '</tr></thead>';
+
+  var body = '<tbody>';
+  r.rows.forEach(function(row) {
+    var yLbl = row.isMat ? 'Year of Maturity (' + row.year + ')' : 'Year ' + row.year;
+    body += '<tr' + (row.isMat ? ' class="tbl-mat"' : '') + '>' +
+      '<td>' + yLbl + '</td>' +
+      '<td>' + pct(row.grossReturn) + '</td>' +
+      '<td>' + fEUR(row.contrib) + '</td>';
+    if (r.includeCash) body += '<td>' + fEUR(row.cash) + '</td>';
+    if (r.gmabApplicable) {
+      body += '<td>' + fEUR(row.gteeOff) + '</td><td>' + fEUR(row.gteeOn) + '</td>';
+    } else {
+      body += '<td>' + fEUR(row.noCharge) + '</td><td>' + fEUR(row.withCharge) + '</td>';
+    }
+    body += '</tr>';
+  });
+
+  // Lightweight sub-row (not a total) showing the final year's values discounted
+  // back to today's money at 3% p.a. inflation.
+  body += '<tr class="ca-real-row"><td>Discounted at 3% p.a.<span class="ca-real-sub">Real value</span></td><td>—</td><td>' + fEUR(realValue(r.rows[r.rows.length-1].contrib, r.termYearsExact)) + '</td>';
+  if (r.includeCash) body += '<td>' + fEUR(realValue(r.finalCash, r.termYearsExact)) + '</td>';
+  if (r.gmabApplicable) {
+    body += '<td>' + fEUR(realValue(r.finalOff, r.termYearsExact)) + '</td><td>' + fEUR(realValue(r.finalOn, r.termYearsExact)) + '</td>';
+  } else {
+    body += '<td>' + fEUR(realValue(r.finalNoCharge, r.termYearsExact)) + '</td><td>' + fEUR(realValue(r.finalWithCharge, r.termYearsExact)) + '</td>';
+  }
+  body += '</tr></tbody>';
+
+  document.getElementById('ca-table-wrap').innerHTML = '<table>' + head + body + '</table>';
+
+  // Disclosure
+  var disc = 'Custom Analysis is an adviser-configured illustration for discussion purposes only. ' +
+    'Projected values are based on ' + (r.returnMode === 'flat' ? 'a flat custom gross return of ' + pct(r.flatReturn) : 'a year-by-year custom gross return schedule') + ' p.a. and an inflation rate of 3.00% per annum. ' +
+    (r.gmabApplicable ? 'The "Guarantee On" column applies the GMAB annual ratcheting guarantee (per-fund guarantee floor tested and ratcheted at each policy anniversary) and includes the guarantee charge; the "Guarantee Off" column excludes the guarantee charge and floor. ' : '') +
+    'Projected values are not guaranteed and actual values may be higher or lower. Allianz Global Life dac is regulated by the Central Bank of Ireland.';
+  document.getElementById('custom-disc').textContent = disc;
+}
+
+// ─── CUSTOM ANALYSIS — COMMISSION TAB (independent of the SRP Commission tab) ─
+function renderCommissionCustom() {
+  var r = customResult;
+  if (!r) return;
+  document.getElementById('comm-custom-placeholder').style.display = 'none';
+  document.getElementById('comm-custom-content').style.display = 'block';
+
+  var cc = r.cc;
+  var grid = document.getElementById('comm-custom-info-grid');
+  grid.innerHTML =
+    '<div class="info-cell"><div class="info-lbl">SP Upfront Commission</div><div class="info-val">' + pct(r.spUpRate) + '</div></div>' +
+    '<div class="info-cell"><div class="info-lbl">RP Upfront Commission</div><div class="info-val">' + (cc.rpPct > 0 ? pct(cc.rpPct) + ' × term (max ' + pct(cc.rpMax) + ')' : 'None') + '</div></div>' +
+    '<div class="info-cell"><div class="info-lbl">Ongoing (Fund-Based)</div><div class="info-val">' + pct(cc.ongoing) + ' p.a.</div></div>' +
+    '<div class="info-cell"><div class="info-lbl">SP Upfront Amount</div><div class="info-val">' + fEUR(r.spUpfrontComm) + '</div></div>' +
+    '<div class="info-cell"><div class="info-lbl">RP Upfront Amount</div><div class="info-val">' + fEUR(r.rpUpfrontComm) + '</div></div>' +
+    '<div class="info-cell"><div class="info-lbl">Clawback Period</div><div class="info-val">' + (r.spUpRate > 0 || cc.rpPct > 0 ? '5 years' : 'N/A') + '</div></div>';
+
+  document.getElementById('comm-custom-scenario-sub').textContent =
+    ' — ' + (r.returnMode === 'flat' ? 'flat return ' + pct(r.flatReturn) + ' p.a.' : 'year-by-year custom schedule');
+
+  var milestonesYr = [1, 2, 3, 4, 5, 10, 15, 20, 25, 30, 35];
+  var tbody = document.getElementById('comm-custom-tbody');
+  tbody.innerHTML = '';
+  r.commRows.forEach(function(row) {
+    if (!row.isMat && milestonesYr.indexOf(row.year) < 0) return;
+    var tr = document.createElement('tr');
+    if (row.isMat) tr.className = 'tbl-mat';
+    var yLbl = row.isMat ? 'Year of Maturity (' + row.year + ')' : 'Year ' + row.year;
+    tr.innerHTML = '<td>' + yLbl + '</td><td>' + fEUR(row.contribInYear) + '</td><td>' + fEUR(row.commInYear) + '</td>';
+    tbody.appendChild(tr);
+  });
+
+  document.getElementById('comm-custom-disc').textContent =
+    'Commission figures shown above are based on the custom return scenario currently configured for this analysis (' +
+    (r.returnMode === 'flat' ? 'flat return of ' + pct(r.flatReturn) + ' p.a.' : 'a year-by-year custom return schedule') + '). ' +
+    'Upfront single premium commission of ' + fEUR(r.spUpfrontComm) + ' and upfront regular premium commission of ' + fEUR(r.rpUpfrontComm) + ' are payable in year 1. ' +
+    'Ongoing commission is calculated on the projected fund value under this scenario and will change if the return assumptions are edited. ' +
+    'Commission clawback applies on cool-off or surrender/transfer to another PRSA provider during the first 5 years. All amounts are illustrative only.';
+}
+
+// ─── CUSTOM ANALYSIS — PDF EXPORT (clean, standalone documents; no SRP content) ─
+function customPdfCss() {
+  return [
+    // font-synthesis:none stops Chrome's print-to-PDF pipeline from fabricating a
+    // synthetic bold weight for glyphs that only appear in regular text elsewhere
+    // on the page — a known Chromium bug that renders random characters (often
+    // tall/narrow ones like "l"/"L") as bold in the saved PDF even though the
+    // print preview looks correct.
+    '* { box-sizing:border-box; margin:0; padding:0; font-synthesis:none; }',
+    'body { font-family:Arial,Helvetica,sans-serif; font-weight:400; background:#e8e8e8; font-size:10pt; color:#2c2c2c; }',
+    '.pg { width:210mm; min-height:297mm; background:#fff; margin:0 auto; padding:14mm 16mm; }',
+    '.topbar { background:#f5f5f5; padding:10px 20px; font-family:Arial; font-size:12px; border-bottom:1px solid #ddd; display:flex; align-items:center; justify-content:space-between; }',
+    '.topbar button { background:#003781; color:#fff; border:none; padding:6px 18px; border-radius:4px; cursor:pointer; font-size:12px; }',
+    '.hdr { display:flex; justify-content:space-between; align-items:flex-start; border-bottom:2pt solid #0377A8; padding-bottom:8pt; margin-bottom:10pt; }',
+    '.hdr-meta { font-size:8.5pt; color:#777; }',
+    '.banner { background:#003781; color:#fff; border-radius:6pt; padding:12pt 16pt; margin-bottom:12pt; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12pt; }',
+    '.banner-title { font-size:13pt; font-weight:700; }',
+    '.banner-sub { font-size:9pt; color:#cfe0f0; margin-top:2pt; }',
+    '.banner-params { display:flex; gap:22pt; flex-wrap:wrap; }',
+    '.bpl { display:block; font-size:7.5pt; text-transform:uppercase; letter-spacing:.4pt; color:#9ab6d8; }',
+    '.bpv { display:block; font-size:12pt; font-weight:700; color:#fff; margin-top:2pt; }',
+    '.bpu { display:block; font-size:7.5pt; color:#9ab6d8; margin-top:1pt; }',
+    '.chart-img { width:100%; margin-bottom:6pt; border:0.5pt solid #e5e8ec; }',
+    '.chart-legend { display:flex; gap:14pt; flex-wrap:wrap; margin:0 0 26pt 2pt; }',
+    '.cl-item { display:flex; align-items:center; gap:5pt; font-size:8pt; color:#555; }',
+    '.cl-swatch { width:12pt; height:8pt; border-radius:2pt; display:inline-block; flex-shrink:0; }',
+    '.scenario-desc { background:#f5f8fc; border-left:3pt solid #0377A8; border-radius:4pt; padding:9pt 12pt; margin-bottom:12pt; }',
+    '.scenario-desc-title { font-size:8pt; font-weight:700; text-transform:uppercase; letter-spacing:.4pt; color:#0377A8; margin-bottom:4pt; }',
+    '.scenario-desc-body { font-size:9pt; color:#333; line-height:1.5; white-space:pre-wrap; }',
+    '.tblhdr { display:flex; justify-content:space-between; align-items:center; margin-bottom:6pt; flex-wrap:wrap; gap:8pt; }',
+    '.tblhdr-title { font-size:11pt; font-weight:700; color:#003781; }',
+    '.tblhdr-charges { font-size:8pt; color:#555; text-align:right; }',
+    '.prjtbl { width:100%; border-collapse:collapse; font-size:8.5pt; margin-bottom:10pt; }',
+    '.prjtbl thead th { color:#003781; font-weight:700; padding:5pt 7pt; border-bottom:2pt solid #003781; text-align:right; }',
+    '.prjtbl thead th:first-child { text-align:left; }',
+    '.prjtbl tbody td { padding:5pt 7pt; border-bottom:0.5pt solid #e5e8ec; text-align:right; }',
+    '.prjtbl tbody td:first-child { text-align:left; font-weight:600; }',
+    '.prjtbl tbody tr:nth-child(even) { background:#f5f8fc; }',
+    '.prjtbl tbody tr.mat { font-weight:700; color:#003781; background:#eef3fa; }',
+    '.prjtbl tbody tr.real td { font-style:italic; color:#888; font-size:8pt; border-top:0.75pt dashed #ccc; }',
+    '.tbl-sub { display:block; font-size:7pt; font-weight:400; font-style:italic; color:#999; }',
+    '.disc { font-size:8pt; color:#777; line-height:1.6; margin-top:10pt; }',
+    '@media print { body { background:#fff; } .topbar { display:none; } .pg { margin:0; padding-bottom:10mm; } * { -webkit-print-color-adjust:exact; print-color-adjust:exact; } }',
+    '@page { size:A4; margin:10mm; }'
+  ].join('\n');
+}
+function customPdfLogo() {
+  // Full inline logo (matches generateDocument's LOGO constant) — inlined rather
+  // than referenced by file path since a window.open('', '_blank') popup's base
+  // URL for resolving relative <img> paths is not reliable across browsers.
+  return '<svg xmlns="http://www.w3.org/2000/svg" height="26" viewBox="0 0 399.76 99.15">' +
+    '<path d="M36.43,52.48H22.78l7.27-23.72ZM15.7,78.62,20.36,63H38.75l4.36,15.58h17L43.22,19.18c-1-3.51-3.1-5.13-6.79-5.13H12.32v5.61h2c2.52,0,3.88,1,3.88,2.91,0,1.27-.28,2.33-1.28,5.22L0,78.62Z" fill="#003781"/>' +
+    '<path d="M79.78,78.62V19c0-3.11-1.82-4.95-4.83-4.95H60v5.61h1c2.51,0,3.58,1.07,3.58,3.61V78.62Z" fill="#003781"/>' +
+    '<path d="M105.62,78.62V19c0-3.11-1.85-4.95-4.84-4.95H85.88v5.61h1c2.52,0,3.59,1.07,3.59,3.61V78.62Z" fill="#003781"/>' +
+    '<path d="M132.13,19.94c0-4.33-3.21-7-8.71-7s-8.73,2.62-8.73,7,3.31,7,8.73,7,8.71-2.6,8.71-7m-.29,58.68V35.16c0-3.1-1.84-4.93-4.85-4.93H112.28v5.5h.87c2.51,0,3.58,1.16,3.58,3.68V78.62Z" fill="#003781"/>' +
+    '<path d="M165.12,55.38v9.41C162.59,67.4,159.51,69,156.9,69s-3.68-1.34-3.68-5,.76-5.21,3.48-6.26a38.66,38.66,0,0,1,8.42-2.36m-20.44-11.3a36.51,36.51,0,0,1,14.91-3.78c4.08,0,5.53,1.45,5.53,5.68v1.08c-6.19,1-8.13,1.38-11.62,2.15A34.7,34.7,0,0,0,147.78,51c-6.11,2.45-9,7.17-9,14.42,0,9.2,4,13.64,12.19,13.64a21.94,21.94,0,0,0,8.14-1.53,27.07,27.07,0,0,0,6.49-4.16v.68c0,3,1.54,4.53,4.55,4.53H184V73.41h-.68c-2.61,0-3.57-1.17-3.57-4.26V46.1c0-12.29-4.27-16.57-16.58-16.57a51.9,51.9,0,0,0-11.59,1.37,38.84,38.84,0,0,0-10.27,3.88Z" fill="#003781"/>' +
+    '<path d="M206.05,78.62V45.9c2.53-2.81,5.13-4.08,8.13-4.08,3.21,0,4,1.27,4,6.14V78.62h15.1V45.72c0-7.66-.55-10.08-3-12.68-2-2.25-5.13-3.39-9.12-3.39-5.91,0-10.07,1.83-15.66,7.06V34.78c0-3-1.57-4.55-4.66-4.55H186.49v5.5h.87c2.51,0,3.59,1.16,3.59,3.68V78.62Z" fill="#003781"/>' +
+    '<path d="M278.07,68.46H257l20.15-28.25v-10H245.55c-3.58,0-5.23,1.64-5.23,5.23v8.8h5.61v-.86c0-2.23,1.16-3.29,3.57-3.29h10.86L240,68.66v10h38Z" fill="#003781"/>' +
+    '<path d="M357.34,77.39V22.68c0-4.36-1.55-5.83-5.78-5.83H338.75V23h.77c2.92,0,3.49.66,3.49,4.18V77.39Zm6.32,0h14.22V34.78c0-4.28-1.65-5.82-5.82-5.82h-8.4Zm-26.93,0V29H328.3c-4.17,0-5.8,1.54-5.8,5.82V77.39Zm54.61-27.81c0,24.11-17.34,41.64-41.15,41.64S309,73.69,309,49.58,326.37,7.94,350.19,7.94s41.15,17.63,41.15,41.64m8.42,0C399.76,21.23,378.55,0,350.19,0S300.6,21.23,300.6,49.58s21.21,49.57,49.59,49.57S399.76,78,399.76,49.58" fill="#003781"/>' +
+    '</svg>';
+}
+// Renders a dedicated, larger offscreen chart for the PDF export rather than
+// reusing the on-screen canvas's snapshot — the results-page chart card is short
+// and wide to fit the layout, which makes a direct toBase64Image() capture small
+// and cramped once dropped onto a printed page. Same labels/datasets, taller
+// aspect ratio and bigger fonts so axis labels stay readable at print size.
+function customChartExportImage() {
+  if (!customChartData) return null;
+  var canvas = document.createElement('canvas');
+  canvas.width = 1400; canvas.height = 620;
+  var tmp = new Chart(canvas.getContext('2d'), {
+    data: { labels: customChartData.labels, datasets: customChartData.datasets },
+    options: {
+      responsive: false, maintainAspectRatio: false, animation: false,
+      interaction: { mode:'index', intersect:false },
+      plugins: { legend:{ display:false }, tooltip:{ enabled:false } },
+      scales: {
+        y: { title:{ display:true, text:'Fund Value (€)', font:{size:18, weight:'bold'}, color:'#222b33' }, ticks:{ callback: function(v){ return '€' + (v >= 1000000 ? (v/1000000).toFixed(1) + 'M' : v >= 1000 ? (v/1000).toFixed(0) + 'k' : v); }, font:{size:15, weight:'bold'}, color:'#222b33' }, grid:{ color:'rgba(0,0,0,0.08)' } },
+        x: { offset:false, title:{ display:true, text:'Policy Year', font:{size:18, weight:'bold'}, color:'#222b33' }, ticks:{ maxRotation:0, font:{size:14, weight:'bold'}, color:'#222b33' }, grid:{ color:'rgba(0,0,0,0.08)' } }
+      }
+    }
+  });
+  var img = tmp.toBase64Image();
+  tmp.destroy();
+  return img;
+}
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, function(c){ return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]; });
+}
+function generateCustomDocument() {
+  var r = customResult;
+  if (!r) { alert('Please generate a Custom Analysis first.'); return; }
+
+  function fe(v) { return '€' + Math.round(v).toLocaleString('en-IE'); }
+  function fp(v) { return (v * 100).toFixed(2) + '%'; }
+
+  var today = new Date();
+  var dateLong = today.toLocaleDateString('en-IE', {day:'2-digit', month:'long', year:'numeric'});
+  var clientName = r.name || 'Valued Client';
+  var termYrs  = Math.floor(r.termMonths / 12);
+  var termMths = r.termMonths % 12;
+  var chartImg = customChartExportImage();
+
+  var scenarioHtml = (state.custom.includeScenarioDesc && state.custom.scenarioDesc && state.custom.scenarioDesc.trim()) ?
+    '<div class="scenario-desc"><div class="scenario-desc-title">Scenario Description</div><div class="scenario-desc-body">' + escapeHtml(state.custom.scenarioDesc) + '</div></div>' : '';
+
+  // Short fund name(s) for the condensed chart legend, e.g. "Allianz Strategy
+  // Select 50 (100%)" -> "Select 50" (drop the % weight and the common prefix).
+  var shortStrat = (r.allocDesc || r.stratLabel || '').split(', ').map(function(p){
+    return p.replace(/\s*\(\d+%\)\s*$/, '').replace(/^Allianz Strategy\s+/, '');
+  }).join(' / ');
+
+  var legendItems = [];
+  if (r.includeCash) legendItems.push({ color:'#DBA103', label:'Cash (' + fp(r.cashReturn) + ')' });
+  if (r.gmabApplicable) {
+    legendItems.push({ color:'#003781', label: shortStrat + ' - Without Guarantee' });
+    legendItems.push({ color:'#0377A8', label: shortStrat + ' - With Guarantee (' + Math.round(r.gmabLevelAvg * 100) + '%)' });
+  } else {
+    legendItems.push({ color:'#003781', label: shortStrat + ' - No Charges' });
+    legendItems.push({ color:'#0377A8', label: shortStrat + ' - With Charges' });
+  }
+  var chartLegendHtml = '<div class="chart-legend">' + legendItems.map(function(it){
+    return '<span class="cl-item"><span class="cl-swatch" style="background:' + it.color + ';"></span>' + it.label + '</span>';
+  }).join('') + '</div>';
+
+  var head = '<tr><th>Year</th><th>Gross Return</th><th>Contributions</th>';
+  if (r.includeCash) head += '<th>Cash (' + pct(r.cashReturn) + ')</th>';
+  head += r.gmabApplicable ? ('<th>' + shortStrat + ' - Without Guarantee</th><th>' + shortStrat + ' - With Guarantee (' + Math.round(r.gmabLevelAvg * 100) + '%)</th>') : '<th>No Charges</th><th>With Charges</th>';
+  head += '</tr>';
+
+  var rows = '';
+  r.rows.forEach(function(row) {
+    var yLbl = row.isMat ? 'Year of Maturity' : 'Year ' + row.year;
+    rows += '<tr' + (row.isMat ? ' class="mat"' : '') + '><td>' + yLbl + '</td><td>' + fp(row.grossReturn) + '</td><td>' + fe(row.contrib) + '</td>';
+    if (r.includeCash) rows += '<td>' + fe(row.cash) + '</td>';
+    rows += r.gmabApplicable ? ('<td>' + fe(row.gteeOff) + '</td><td>' + fe(row.gteeOn) + '</td>') : ('<td>' + fe(row.noCharge) + '</td><td>' + fe(row.withCharge) + '</td>');
+    rows += '</tr>';
+  });
+
+
+  var html = '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">' +
+    '<title>Custom Analysis – ' + clientName + '</title>' +
+    '<style>' + customPdfCss() + '</style>' +
+    '<script>window.onload=function(){window.print();}<\/script>' +
+    '</head><body>' +
+    '<div class="topbar"><strong>Custom Analysis &ndash; ' + clientName + '</strong><button onclick="window.print()">Print / Save as PDF</button></div>' +
+    '<div class="pg">' +
+      '<div class="hdr">' + customPdfLogo() + '<div class="hdr-meta">' + dateLong + '<br>Policy: ' + (r.policyNum || '&ndash;') + '</div></div>' +
+      '<div class="banner">' +
+        '<div>' +
+          '<div class="banner-title">' + clientName + ' &ndash; ' + (r.prsaType === 'standard' ? 'Standard' : 'Non-Standard') + ' PRSA (' + r.code + ')</div>' +
+          '<div class="banner-sub">' + (r.allocDesc || '') + '</div>' +
+        '</div>' +
+        '<div class="banner-params">' +
+          '<div class="bp"><span class="bpl">Policy Term</span><span class="bpv">' + termYrs + 'y ' + (termMths > 0 ? termMths + 'm' : '') + '</span><span class="bpu">to age ' + r.nra + '</span></div>' +
+        '</div>' +
+      '</div>' +
+      scenarioHtml +
+      (chartImg ? '<img class="chart-img" src="' + chartImg + '">' + chartLegendHtml : '') +
+      '<div class="tblhdr"><div class="tblhdr-title">Fund Value Projections</div><div class="tblhdr-charges">' + customChargeLineHtml(r) + '</div></div>' +
+      '<table class="prjtbl"><thead>' + head + '</thead><tbody>' + rows + '</tbody></table>' +
+      '<p class="disc">This Custom Analysis is an adviser-prepared illustration for discussion purposes only, based on the return assumptions and charges set out above. ' +
+        'It is not a guarantee of future performance and actual values may be higher or lower than shown. ' +
+        (r.gmabApplicable ? 'The "' + shortStrat + ' - With Guarantee" figures include the guarantee charge. ' : '') +
+        'Allianz Global Life dac is regulated by the Central Bank of Ireland.</p>' +
+    '</div>' +
+    '</body></html>';
+
+  var win = window.open('', '_blank');
+  if (!win) { alert('Pop-up blocked. Please allow pop-ups for this page and try again.'); return; }
+  win.document.write(html);
+  win.document.close();
+}
+function generateCommissionCustomDocument() {
+  var r = customResult;
+  if (!r) { alert('Please generate a Custom Analysis first.'); return; }
+
+  function fe(v) { return '€' + Math.round(v).toLocaleString('en-IE'); }
+  function fp(v) { return (v * 100).toFixed(2) + '%'; }
+
+  var today = new Date();
+  var dateLong = today.toLocaleDateString('en-IE', {day:'2-digit', month:'long', year:'numeric'});
+  var planName = r.prsaType === 'standard' ? 'Allianz Vantage Standard PRSA' : 'Allianz Vantage Non-Standard PRSA (' + r.code.charAt(0) + ')';
+  var clientName = r.name || 'Valued Client';
+  var termYrs  = Math.floor(r.termMonths / 12);
+  var termMths = r.termMonths % 12;
+  var returnDesc = r.returnMode === 'flat' ? ('Flat ' + fp(r.flatReturn) + ' p.a.') : 'Year-by-year custom schedule';
+  var cc = r.cc;
+
+  var milestonesYr = [1, 2, 3, 4, 5, 10, 15, 20, 25, 30, 35];
+  var rows = '';
+  r.commRows.forEach(function(row) {
+    if (!row.isMat && milestonesYr.indexOf(row.year) < 0) return;
+    var yLbl = row.isMat ? 'Year of Maturity' : 'Year ' + row.year;
+    rows += '<tr' + (row.isMat ? ' class="mat"' : '') + '><td>' + yLbl + '</td><td>' + fe(row.contribInYear) + '</td><td>' + fe(row.commInYear) + '</td></tr>';
+  });
+
+  var html = '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">' +
+    '<title>Commission Statement (Custom Analysis) – ' + clientName + '</title>' +
+    '<style>' + customPdfCss() + '</style>' +
+    '<script>window.onload=function(){window.print();}<\/script>' +
+    '</head><body>' +
+    '<div class="topbar"><strong>Commission Statement &ndash; ' + clientName + '</strong><button onclick="window.print()">Print / Save as PDF</button></div>' +
+    '<div class="pg">' +
+      '<div class="hdr">' + customPdfLogo() + '<div class="hdr-meta">' + dateLong + '<br>Policy: ' + (r.policyNum || '&ndash;') + '</div></div>' +
+      '<div class="banner">' +
+        '<div class="banner-title">' + clientName + ' &ndash; ' + planName + ' &ndash; Commission Statement</div>' +
+        '<div class="banner-sub">Scenario used: ' + returnDesc + ' &middot; ' + r.stratLabel + (r.stratSub ? ' &ndash; ' + r.stratSub : '') + '</div>' +
+        '<div class="banner-params">' +
+          '<div class="bp"><span class="bpl">Policy Term</span><span class="bpv">' + termYrs + 'y ' + (termMths > 0 ? termMths + 'm' : '') + '</span></div>' +
+          '<div class="bp"><span class="bpl">SP Upfront</span><span class="bpv">' + fe(r.spUpfrontComm) + '</span></div>' +
+          '<div class="bp"><span class="bpl">RP Upfront</span><span class="bpv">' + fe(r.rpUpfrontComm) + '</span></div>' +
+          '<div class="bp"><span class="bpl">Ongoing</span><span class="bpv">' + fp(cc.ongoing) + ' p.a.</span></div>' +
+        '</div>' +
+      '</div>' +
+      '<table class="prjtbl"><thead><tr><th>Year</th><th>Contributions in Year</th><th>Remuneration Payable</th></tr></thead><tbody>' + rows + '</tbody></table>' +
+      '<p class="disc">Commission figures above are based on the custom return scenario set out above (' + returnDesc + ') and the current product code (' + r.code + '). ' +
+        'Upfront single premium commission of ' + fe(r.spUpfrontComm) + ' and upfront regular premium commission of ' + fe(r.rpUpfrontComm) + ' are payable in year 1. ' +
+        'Ongoing commission is calculated on the projected fund value under this scenario and will change if the return assumptions are edited. ' +
+        'Commission clawback applies on cool-off or surrender/transfer to another PRSA provider during the first 5 years. All amounts are illustrative only. ' +
+        'Allianz Global Life dac is regulated by the Central Bank of Ireland.</p>' +
+    '</div>' +
+    '</body></html>';
+
+  var win = window.open('', '_blank');
+  if (!win) { alert('Pop-up blocked. Please allow pop-ups for this page and try again.'); return; }
+  win.document.write(html);
+  win.document.close();
+}
+
 // ─── SP UPFRONT COMMISSION OVERRIDE (pop-out stepper beside Product Code) ───
 var SPUP_STEP = 0.005; // 0.5 percentage points
 var spUpPopoverOpen = false;
@@ -1721,7 +2770,7 @@ function applySpUpRateChange(next) {
   if (illResult) {
     var scrollY = window.scrollY;
     runIllustration();
-    switchResult('commission');
+    switchResultSRP('commission');
     window.scrollTo(0, scrollY);
   }
 }
